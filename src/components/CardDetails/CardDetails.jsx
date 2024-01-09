@@ -71,14 +71,14 @@ const CardDetails = ({ card, onClose }) => {
               <img src={card.card_faces[0].image_uris.png} alt={card.card_faces[0].name} />
               <div className='card-detail ml-4'>
                 <h3 className='modal-title py-4'>{card.card_faces[0].name} {renderManaCost(card.card_faces[0].mana_cost)}</h3>
-                <p className='card-description'>{card.card_faces[0].oracle_text}</p>
+                <p className='card-description'>{renderOracleText(card.card_faces[0].oracle_text)}</p>
               </div>
             </div>
             <div className='second-card'>
               <img src={card.card_faces[1].image_uris.png} alt={card.card_faces[1].name} />
               <div className='card-detail ml-4'>
                 <h3 className='modal-title py-4'>{card.card_faces[1].name} {renderManaCost(card.card_faces[1].mana_cost)}</h3>
-                <p className='card-description'>{card.card_faces[1].oracle_text}</p>
+                <p className='card-description'>{renderOracleText(card.card_faces[1].oracle_text)}</p>
               </div>
             </div>
           </div>
