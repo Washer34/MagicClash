@@ -39,20 +39,16 @@ const CardDetails = ({ card, onClose }) => {
   const renderOracleText = (oracleText) => {
     if (!oracleText) return null;
   
-    // Remplacez d'abord les symboles de mana par des images ou des spans
     const manaCostRegex = /\{(\d+|[WUBRGT])\}/g;
     let textWithManaSymbols = oracleText.replace(manaCostRegex, (match, manaValue) => {
       if (isNaN(manaValue)) {
-        // Si c'est un mana coloré, utilisez une image
         const imagePath = `/assets/${manaValue}-mana.png`;
         return `<img class='inline-mana' src='${imagePath}' alt='${manaValue} mana' />`;
       } else {
-        // Si c'est un mana incolore, utilisez une balise span
         return `<span class='inline-uncolored-mana'>${manaValue}</span>`;
       }
     });
   
-    // Ensuite, divisez le texte par les retours à la ligne et mappez-les à des éléments JSX
     return textWithManaSymbols.split('\n').map((line, index, array) => (
       <div className='card-capacity' key={index}>
         <span dangerouslySetInnerHTML={{ __html: line }} />

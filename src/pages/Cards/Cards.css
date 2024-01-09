@@ -20,6 +20,10 @@
   text-align: center;
 }
 
+.card-container input {
+  margin-right: 1rem;
+}
+
 @media (min-width: 1200px) {
   .cards-grid {
     grid-template-columns: repeat(5, 1fr);

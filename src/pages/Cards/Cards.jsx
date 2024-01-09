@@ -7,6 +7,7 @@ import noImage from '../../../public/assets/no-image.png'
 const Cards = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cards, setCards] = useState([]);
+  const [totalCards, setTotalCards] = useState(0);
   const [selectedCard, setSelectedCard] = useState(null);
 
   const handleSearch = (e) => {
@@ -14,6 +15,7 @@ const Cards = () => {
     fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchTerm)}`)
       .then(response => response.json())
       .then(data => {
+        setTotalCards(data.total_cards)
         setCards(data.data);
       })
       .catch(error => {
@@ -29,6 +31,7 @@ const Cards = () => {
     setSelectedCard(null);
   };
 
+
   return (
     <div className='card-container'>
       <form onSubmit={handleSearch}>
@@ -40,6 +43,9 @@ const Cards = () => {
         />
         <button type="submit">Rechercher</button>
       </form>
+      {totalCards > 1 && (
+        <p>{totalCards} résultats correspondent à la recherche.</p>
+      )}
       <div className="cards-grid">
         {cards.map(card => (
           <div className="card" key={card.id} onClick={() => handleCardClick(card)}>

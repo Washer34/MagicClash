@@ -90,15 +90,10 @@
 
 .inline-mana {
   height: 1em !important;
-  /* Assurez-vous que la taille de l'image s'adapte à la taille de la police environnante */
   width: auto;
-  /* Laissez la largeur s'ajuster automatiquement */
   vertical-align: middle;
-  /* Alignez verticalement les images avec le milieu du texte environnant */
   margin-left: 0.2em;
-  /* Ajoutez un peu d'espace à gauche si nécessaire */
   margin-right: 0.2em;
-  /* Ajoutez un peu d'espace à droite si nécessaire */
 }
 
 .inline-uncolored-mana {
@@ -116,7 +111,6 @@
 
 .card-description {
   line-height: 1.4;
-  /* Ajustez la hauteur de ligne si nécessaire pour un meilleur rendu du texte */
 }
 
 .card-description img {
@@ -134,7 +128,6 @@
   }
 }
 
-/* Styles pour les petits écrans (téléphones mobiles) */
 @media (max-width: 604px) {
   .modal-content {
     max-width: 95%;
