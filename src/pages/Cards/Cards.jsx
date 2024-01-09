@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import CardDetails from '../../components/CardDetails/CardDetails';
 import './Cards.css'
-import noImage from '../../assets/no-image.png'
+import noImage from '../../../public/assets/no-image.png'
 
 const Cards = () => {
   const [searchTerm, setSearchTerm] = useState('');

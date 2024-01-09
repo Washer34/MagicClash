@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import './CardDetails.css';
-import noImage from '../../assets/no-image.png'
+import noImage from '../../../public/assets/no-image.png'
 
 const CardDetails = ({ card, onClose }) => {
   const handleOutsideClick = (e) => {
@@ -28,7 +28,7 @@ const CardDetails = ({ card, onClose }) => {
     return manaSymbols.map((symbol, index) => {
       const manaValue = symbol.slice(1, -1);
       if (isNaN(manaValue)) {
-        const imagePath = `src/assets/${manaValue}-mana.png`;
+        const imagePath = `/assets/${manaValue}-mana.png`;
         return <img className='colored-mana' key={index} src={imagePath} alt={`${manaValue} mana`} />;
       } else {
         return <span className="uncolored-mana" key={index}>{manaValue}</span>;
@@ -44,7 +44,7 @@ const CardDetails = ({ card, onClose }) => {
     let textWithManaSymbols = oracleText.replace(manaCostRegex, (match, manaValue) => {
       if (isNaN(manaValue)) {
         // Si c'est un mana coloré, utilisez une image
-        const imagePath = `src/assets/${manaValue}-mana.png`;
+        const imagePath = `/assets/${manaValue}-mana.png`;
         return `<img class='inline-mana' src='${imagePath}' alt='${manaValue} mana' />`;
       } else {
         // Si c'est un mana incolore, utilisez une balise span
