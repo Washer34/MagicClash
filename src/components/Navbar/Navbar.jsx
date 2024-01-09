@@ -4,7 +4,7 @@ import './Navbar.css'
 
 const Navbar = () => {
   return (
-    <nav className="navbar bg-gray-800 text-white p-4 w-full">
+    <nav className="navbar text-white p-4">
       <div className="container mx-auto flex justify-between">
         <div className="text-lg font-semibold">
           <Link to="/">Magic Clash</Link>
