@@ -15,7 +15,7 @@
   right: 0;
   bottom: 0;
   left: 0;
-  background: url('/src/assets/MC-BG.png') center center;
+  background: url('/assets/MC-BG.png') center center;
   background-size: cover;
   background-attachment: fixed;
   opacity: 0.05;
