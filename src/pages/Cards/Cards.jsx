@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import CardDetails from '../../components/CardDetails/CardDetails';
 import './Cards.css'
+import noImage from '../../assets/no-image.png'
 
 const Cards = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,8 +44,12 @@ const Cards = () => {
         {cards.map(card => (
           <div className="card" key={card.id} onClick={() => handleCardClick(card)}>
             <h3>{card.name}</h3>
-            {card.image_uris.png && (
+            {card.card_faces && card.card_faces[0].image_uris ? (
+              <img src={card.card_faces[0].image_uris.png} alt={card.card_faces[0].name} />
+            ) : card.image_uris && card.image_uris.png ? (
               <img src={card.image_uris.png} alt={card.name} />
+            ) : (
+              <img src={noImage} alt="Image indisponible" />
             )}
           </div>
         ))}
