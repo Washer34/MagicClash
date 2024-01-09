@@ -5,17 +5,19 @@
   padding: 0 20px;
   box-sizing: border-box;
   min-height: 100vh;
+  position: relative;
 }
 
 .app-container::before {
   content: '';
-  position: absolute;
+  position: fixed; /* Changez position absolute à fixed */
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
-  background: url('/src/assets/MC-BG.png') center center fixed;
+  background: url('/src/assets/MC-BG.png') center center;
   background-size: cover;
+  background-attachment: fixed; /* Assurez-vous que cela est défini */
   opacity: 0.05;
   z-index: -1;
 }
