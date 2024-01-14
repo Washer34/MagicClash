@@ -11,6 +11,8 @@ import Signin from './pages/AuthPage/Signin'
 import Signup from './pages/AuthPage/Signup'
 import Decks from './pages/Decks/Decks';
 import DeckDetail from './pages/Decks/DeckDetail';
+import Lobby from './pages/Game/Lobby';
+import Room from './pages/Game/Room';
 
 function App() {
   const [, setUser] = useAtom(userAtom);
@@ -34,7 +36,9 @@ function App() {
             <Route path="/signin" element={<Signin />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/decks" element={<Decks />} />
-            <Route path="/decks/:id" element={<DeckDetail/>} />
+            <Route path="/decks/:id" element={<DeckDetail />} />
+            <Route path="/games" element={<Lobby />} />
+            <Route path="/room/:id" element={<Room />} />
           </Routes>
         </div>
       </Router>

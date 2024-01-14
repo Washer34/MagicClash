@@ -25,6 +25,7 @@ const Navbar = () => {
           {user.isLoggedIn ? (
             <>
               <Link to="/decks">Mes Decks</Link>
+              <Link to="/games">Jouer</Link>
               <button className='disconnect' onClick={handleLogout}>Se Déconnecter</button>
             </>
           ) : (
