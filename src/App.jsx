@@ -1,11 +1,27 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useAtom } from 'jotai';
+import { userAtom } from './atoms/userAtom';
 
 import './App.css'
 import Navbar from './components/Navbar/Navbar'
 import HomePage from './pages/HomePage/HomePage'
 import Cards from './pages/Cards/Cards'
+import Signin from './pages/AuthPage/Signin'
+import Signup from './pages/AuthPage/Signup'
+import Decks from './pages/Decks/Decks';
+import DeckDetail from './pages/Decks/DeckDetail';
 
 function App() {
+  const [, setUser] = useAtom(userAtom);
+
+  useEffect(() => {
+    const userInfosString = localStorage.getItem('userInfos');
+    const userInfos = userInfosString ? JSON.parse(userInfosString) : null;
+    if (userInfos) {
+      setUser({ isLoggedIn: true, username: userInfos.username, token: userInfos.token });
+    }
+  }, [setUser]);
 
   return (
     <div className="app-container">
@@ -15,6 +31,10 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/cards" element={<Cards />} />
+            <Route path="/signin" element={<Signin />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/decks" element={<Decks />} />
+            <Route path="/decks/:id" element={<DeckDetail/>} />
           </Routes>
         </div>
       </Router>
