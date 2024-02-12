@@ -9,13 +9,13 @@
 }
 
 .app-container::before {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
-  background: url('/assets/MC-BG.png') center center;
+  background: url("/assets/MC-BG.png") center center;
   background-size: cover;
   background-attachment: fixed;
   opacity: 0.2;
@@ -26,7 +26,6 @@
   display: flex;
   flex-grow: 1;
   width: 100%;
-  max-width: 1200px;
   padding: 20px;
   box-sizing: border-box;
   justify-content: center;
@@ -37,4 +36,26 @@
   flex-grow: 1;
   justify-content: center;
   align-content: center;
+}
+
+.app-container button {
+  margin: 1rem;
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+.app-container a:hover{
+  cursor: pointer;
+}
+
+.leave-btn {
+  background-color: red;
+}
+
+.start-btn {
+  background-color: teal;
+}
+
+.page-content {
+  width: 100%;
 }

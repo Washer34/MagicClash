@@ -21,7 +21,7 @@ function App() {
     const userInfosString = localStorage.getItem('userInfos');
     const userInfos = userInfosString ? JSON.parse(userInfosString) : null;
     if (userInfos) {
-      setUser({ isLoggedIn: true, username: userInfos.username, token: userInfos.token });
+      setUser({ isLoggedIn: true, username: userInfos.username, token: userInfos.token, userId: userInfos.userId });
     }
   }, [setUser]);
 

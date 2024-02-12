@@ -27,12 +27,14 @@ const Signin = () => {
       }
 
       const data = await response.json();
+      console.log(data);
       setUser({
         isLoggedIn: true,
         username: data.username,
-        token: data.token
+        token: data.token,
+        userId: data.userId,
       });
-      localStorage.setItem('userInfos', JSON.stringify({ username: data.username, token: data.token }));
+      localStorage.setItem('userInfos', JSON.stringify({ username: data.username, token: data.token, userId: data.userId }));
       navigate('/');
 
     } catch (error) {
