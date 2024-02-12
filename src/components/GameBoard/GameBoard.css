@@ -1,0 +1,33 @@
+.game-board {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  border: 1px solid #ddd; /* Couleur de bordure plus subtile */
+  background-color: rgba(255, 255, 255, 0.3); /* Couleur de fond plus neutre pour le plateau de jeu */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Empêche le débordement de contenu hors du plateau */
+}
+
+.hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; /* Espacement entre les cartes */
+  justify-content: center;
+}
+
+.card-image {
+  max-width: 150px; /* Taille maximale pour les images des cartes */
+  transition: transform 0.2s ease; /* Transition douce pour le survol */
+  cursor: grab; /* Curseur de saisie pour indiquer que l'élément est draggable */
+}
+
+.card-image:active {
+  cursor: grabbing;
+}
+
+.card-image:hover {
+  transform: scale(1.1); /* Effet de zoom au survol pour mettre en évidence la carte sélectionnée */
+  z-index: 10; /* Assure que la carte survolée est au-dessus des autres */
+}

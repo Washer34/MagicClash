@@ -4,4 +4,5 @@ export const userAtom = atom({
   isLoggedIn: false,
   username: null,
   token: null,
+  userId: null,
 });

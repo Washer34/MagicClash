@@ -1,16 +1,17 @@
-import { Link } from 'react-router-dom';
-import { useAtom } from 'jotai';
-import { userAtom } from '../../atoms/userAtom';
+import { Link, useNavigate } from "react-router-dom";
+import { useAtom } from "jotai";
+import { userAtom } from "../../atoms/userAtom";
 
-import './Navbar.css'
+import "./Navbar.css";
 
 const Navbar = () => {
   const [user, setUser] = useAtom(userAtom);
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     setUser({ isLoggedIn: false, username: null, token: null });
-
-    localStorage.removeItem('userInfos')
+    localStorage.removeItem("userInfos");
+    navigate("/");
   };
 
   return (
@@ -26,7 +27,9 @@ const Navbar = () => {
             <>
               <Link to="/decks">Mes Decks</Link>
               <Link to="/games">Jouer</Link>
-              <button className='disconnect' onClick={handleLogout}>Se Déconnecter</button>
+              <a className="disconnect" onClick={handleLogout}>
+                Se Déconnecter
+              </a>
             </>
           ) : (
             <>
