@@ -1,9 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAtom } from "jotai";
 import { userAtom } from "../../atoms/userAtom";
-import io from "socket.io-client";
-import GameBoard from "../../components/GameBoard/GameBoard";
+import { useSocket } from "../../SocketContext";
 
 const Room = () => {
   const { id } = useParams();
@@ -11,80 +10,50 @@ const Room = () => {
   const [isCreator, setIsCreator] = useState(false);
   const [user] = useAtom(userAtom);
   const navigate = useNavigate();
-  const socket = useRef(null);
-  const [isGameStarted, setIsGameStarted] = useState(false);
   const [decks, setDecks] = useState([]);
   const [selectedDeckId, setSelectedDeckId] = useState("");
+  const [hasJoined, setHasJoined] = useState(false);
+
+  const socket = useSocket();
 
   useEffect(() => {
-    socket.current = io("http://localhost:3000");
+    if (socket == null) return;
 
-    const fetchRoomInfos = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/games/${id}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Réponse non valide");
-        }
-        const data = await response.json();
-        console.log(data);
-        setRoomDetails(data);
-
-        if (data.isCreator) {
-          setIsCreator(true);
-        }
-      } catch (error) {
-        console.error("Erreur lors de la connection à la partie:", error);
-      }
+    const gameCreatedListener = (newGame) => {
+      setRoomDetails((prevDetails) => ({ ...prevDetails, ...newGame }));
     };
 
-    const fetchDecks = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/decks`,
-          {
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Erreur lors de la récupération des decks");
-        }
-        const data = await response.json();
-        setDecks(data);
-      } catch (error) {
-        console.error("Erreur lors de la récupération des decks:", error);
-      }
+    const checkCreator = (isCreatorStatus) => {
+      setIsCreator(isCreatorStatus);
     };
 
-    if (id) {
-      socket.current.emit("joinRoom", { roomId: id });
+    const updateRoomDetails = (updatedRoomDetails) => {
+      setRoomDetails(updatedRoomDetails);
+      const isUserCreator = updatedRoomDetails.creator === user.userId;
+      setIsCreator(isUserCreator);
+    };
+
+    const playGame = () => {
+      navigate(`/play/${id}`);
+    };
+
+    const testplayer = () => {
+      console.log("test")
     }
 
-    socket.current.on("playerJoined", (updatedRoomDetails) => {
-      console.log(`quelqu'un a rejoint: `, updatedRoomDetails);
-      setRoomDetails(updatedRoomDetails);
-    });
+    socket.on("playerJoined", gameCreatedListener);
+    socket.on("playerLeft", gameCreatedListener);
+    socket.on("isCreator", checkCreator);
+    socket.on("updateRoom", updateRoomDetails);
+    socket.on("gameReadyResponse", playGame);
+    socket.on("playerReady", testplayer)
 
-    socket.current.on("playerLeft", (updatedRoomDetails) => {
-      setRoomDetails(updatedRoomDetails);
-    });
+    const savedRoomDetails = sessionStorage.getItem("roomDetails");
+    if (savedRoomDetails) {
+      setRoomDetails(JSON.parse(savedRoomDetails));
+    }
 
-    socket.current.on("gameStarted", () => {
-      console.log("Le jeu commence!");
-      setIsGameStarted(true);
-      socket.current.emit("gameReady", { roomId: id, userId: user.userId });
-    });
-
-    if (user.token && id) {
+    if (user.userId && id) {
       fetchRoomInfos();
       fetchDecks();
     }
@@ -93,98 +62,114 @@ const Room = () => {
       handleDeckSelection();
     }
 
+    setHasJoined(true);
     return () => {
-      socket.current.emit("leaveRoom", id);
-      socket.current.off("playerJoined");
-      socket.current.off("playerLeft");
-      socket.current.off("gameStarted");
-      socket.current.disconnect();
-      console.log("j'ai delete")
+      if (hasJoined) {
+        socket.off("playerJoined", gameCreatedListener);
+        socket.off("playerLeft", gameCreatedListener);
+        socket.off("isCreator", checkCreator);
+        socket.off("updateRoom", updateRoomDetails);
+        socket.off("gameReadyResponse", playGame);
+      }
     };
-  }, [id]);
+  }, [id, user.userId, socket, hasJoined]);
 
   const startGame = () => {
-    socket.current.emit("startGame", { roomId: id });
+    socket.emit("gameReady", { roomId: id });
   };
 
   const leaveRoom = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/games/${id}/leave`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-          body: JSON.stringify({ userId: user._id }),
-        }
-      );
-
-      if (!response.ok) {
-        // Si la réponse n'est pas ok, lance une erreur pour passer au bloc catch
-        throw new Error("Erreur lors de la sortie de la room");
-      }
-
-      const data = await response.json();
-      if (data.message === "Partie supprimée") {
-        navigate("/games");
-      } else {
-        console.log("Vous avez quitté la room", data);
-        navigate("/games");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la sortie de la room:", error);
-      // Ici, vous pouvez gérer l'erreur, par exemple, en affichant un message à l'utilisateur
-    }
+    navigate("/games");
+    sessionStorage.removeItem("roomDetails");
   };
 
   const handleDeckSelection = (e) => {
     if (e) {
       setSelectedDeckId(e.target.value);
-      socket.current.emit("deckSelected", {
+      socket.emit("deckSelected", {
         roomId: id,
         deckId: e.target.value,
         userId: user.userId,
       });
     }
-  }
+  };
+
+  const fetchRoomInfos = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/games/${id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Réponse non valide");
+      }
+      const data = await response.json();
+      setRoomDetails(data);
+
+      sessionStorage.setItem("roomDetails", JSON.stringify(data));
+
+      if (data.isCreator) {
+        setIsCreator(true);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la connection à la partie:", error);
+    }
+  };
+
+  const fetchDecks = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/decks`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Erreur lors de la récupération des decks");
+      }
+      const data = await response.json();
+      setDecks(data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des decks:", error);
+    }
+  };
 
   const players = [roomDetails?.player1, roomDetails?.player2].filter(Boolean);
 
   return (
     <div className="page-content">
-      {isGameStarted ? (
-        <GameBoard roomId={id} socket={socket.current} />
-      ) : (
-        <>
-          <h1>Room: {roomDetails?.name}</h1>
-          <h2>Joueurs:</h2>
-          <ul>
-            {players.map((player) => (
-              <li key={player._id}>{player.username}</li>
-            ))}
-          </ul>
-          <select value={selectedDeckId} onChange={handleDeckSelection}>
-            {selectedDeckId === "" && (
-              <option value="">Sélectionner un deck</option>
-            )}
-            {decks.map((deck) => (
-              <option key={deck._id} value={deck._id}>
-                {deck.name}
-              </option>
-            ))}
-          </select>
-          {isCreator && players.length === 2 && (
-            <button className="start-btn" onClick={startGame}>
-              Lancer
-            </button>
-          )}
-          <button className="leave-btn" onClick={leaveRoom}>
-            Quitter
-          </button>
-        </>
+      <h1>Room: {roomDetails?.name}</h1>
+      <h2>Joueurs:</h2>
+      <ul>
+        {players.map((player) => (
+          <li key={player._id}>{player.username}</li>
+        ))}
+      </ul>
+      <select value={selectedDeckId} onChange={handleDeckSelection}>
+        {selectedDeckId === "" && (
+          <option value="">Sélectionner un deck</option>
+        )}
+        {decks.map((deck) => (
+          <option key={deck._id} value={deck._id}>
+            {deck.name}
+          </option>
+        ))}
+      </select>
+      {isCreator && players.length === 2 && (
+        <button className="start-btn" onClick={startGame}>
+          Lancer
+        </button>
       )}
+      <button className="leave-btn" onClick={leaveRoom}>
+        Quitter
+      </button>
     </div>
   );
 };

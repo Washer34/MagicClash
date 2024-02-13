@@ -34,7 +34,7 @@ const Signin = () => {
         token: data.token,
         userId: data.userId,
       });
-      localStorage.setItem('userInfos', JSON.stringify({ username: data.username, token: data.token, userId: data.userId }));
+      sessionStorage.setItem('userInfos', JSON.stringify({ username: data.username, token: data.token, userId: data.userId }));
       navigate('/');
 
     } catch (error) {

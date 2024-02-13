@@ -1,8 +1,14 @@
+.play-page {
+  width: 100%;
+  border: 1px solid blue;
+  height: 100vh;
+}
+
 .game-board {
   position: relative;
   width: 100%;
   height: 100vh;
-  border: 1px solid #ddd; /* Couleur de bordure plus subtile */
+  border: 1px solid #ddd;
   background-color: rgba(255, 255, 255, 0.3); /* Couleur de fond plus neutre pour le plateau de jeu */
   display: flex;
   justify-content: center;
