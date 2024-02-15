@@ -1,7 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 import { userAtom } from "./atoms/userAtom";
+import { SocketProvider } from "./SocketContext";
+import io from "socket.io-client"
 
 import "./App.css";
 import Navbar from "./components/Navbar/Navbar";
@@ -13,10 +15,10 @@ import Decks from "./pages/Decks/Decks";
 import DeckDetail from "./pages/Decks/DeckDetail";
 import Lobby from "./pages/Game/Lobby";
 import Room from "./pages/Game/Room";
-import PlayPage from "./pages/PlayPage/PlayPage";
 
 function App() {
-  const [, setUser] = useAtom(userAtom);
+  const [user, setUser] = useAtom(userAtom);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
     const userInfosString = sessionStorage.getItem("userInfos");
@@ -40,7 +42,22 @@ function App() {
     }
   }, [setUser]);
 
+  useEffect(() => {
+    if (user.userId) {
+      const newSocket = io("http://localhost:3000")
+      newSocket.on("connect", () => {
+        console.log("Connected to server");
+        newSocket.emit("register", user.userId);
+      });
+
+      setSocket(newSocket);
+
+      return () => newSocket.close();
+    }
+  }, [user.userId])
+
   return (
+    <SocketProvider socket={socket}>
     <div className="app-container">
       <Router>
         <Navbar />
@@ -53,12 +70,12 @@ function App() {
             <Route path="/decks" element={<Decks />} />
             <Route path="/decks/:id" element={<DeckDetail />} />
             <Route path="/games" element={<Lobby />} />
-            <Route path="/room/:id" element={<Room />} />
-            <Route path="/play/:id" element={<PlayPage />} />
+            <Route path="/room/:roomId" element={<Room />} />
           </Routes>
         </div>
       </Router>
-    </div>
+      </div>
+      </SocketProvider>
   );
 }
 

@@ -1,176 +1,165 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAtom } from "jotai";
 import { userAtom } from "../../atoms/userAtom";
 import { useSocket } from "../../SocketContext";
 
-const Room = () => {
-  const { id } = useParams();
-  const [roomDetails, setRoomDetails] = useState(null);
-  const [isCreator, setIsCreator] = useState(false);
-  const [user] = useAtom(userAtom);
-  const navigate = useNavigate();
-  const [decks, setDecks] = useState([]);
-  const [selectedDeckId, setSelectedDeckId] = useState("");
-  const [hasJoined, setHasJoined] = useState(false);
+import './Room.css'
 
+const Room = () => {
+  const [user] = useAtom(userAtom);
+  const [loading, setLoading] = useState(true);
+  const [decks, setDecks] = useState([]);
+  const [selectedDeck, setSelectedDeck] = useState("");
+  const [gameDetails, setGameDetails] = useState(null);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [myHand, setMyHand] = useState([]);
+  const navigate = useNavigate();
+  const { roomId } = useParams();
   const socket = useSocket();
 
   useEffect(() => {
-    if (socket == null) return;
+    if (!socket) return;
 
-    const gameCreatedListener = (newGame) => {
-      setRoomDetails((prevDetails) => ({ ...prevDetails, ...newGame }));
+    setLoading(true);
+
+    const handleGameDetails = (details) => {
+      setGameDetails(details);
+      console.log(details);
     };
 
-    const checkCreator = (isCreatorStatus) => {
-      setIsCreator(isCreatorStatus);
+    const handleRoomClosed = () => {
+      navigate("/games");
+      console.log("l'hôte a quitté");
     };
 
-    const updateRoomDetails = (updatedRoomDetails) => {
-      setRoomDetails(updatedRoomDetails);
-      const isUserCreator = updatedRoomDetails.creator === user.userId;
-      setIsCreator(isUserCreator);
+    const handleGameStarted = () => {
+      setGameStarted(true);
     };
 
-    const playGame = () => {
-      navigate(`/play/${id}`);
+    const handleHandDealt = ({ hand }) => {
+      setMyHand(hand);
+      console.log(hand);
     };
 
-    const testplayer = () => {
-      console.log("test")
-    }
+    socket.on("gameUpdated", handleGameDetails);
+    socket.on("roomClosed", handleRoomClosed);
+    socket.on("gameStarted", handleGameStarted);
+    socket.on("handDealt", handleHandDealt);
 
-    socket.on("playerJoined", gameCreatedListener);
-    socket.on("playerLeft", gameCreatedListener);
-    socket.on("isCreator", checkCreator);
-    socket.on("updateRoom", updateRoomDetails);
-    socket.on("gameReadyResponse", playGame);
-    socket.on("playerReady", testplayer)
+    fetchData();
 
-    const savedRoomDetails = sessionStorage.getItem("roomDetails");
-    if (savedRoomDetails) {
-      setRoomDetails(JSON.parse(savedRoomDetails));
-    }
-
-    if (user.userId && id) {
-      fetchRoomInfos();
-      fetchDecks();
-    }
-
-    if (decks.length > 0) {
-      handleDeckSelection();
-    }
-
-    setHasJoined(true);
     return () => {
-      if (hasJoined) {
-        socket.off("playerJoined", gameCreatedListener);
-        socket.off("playerLeft", gameCreatedListener);
-        socket.off("isCreator", checkCreator);
-        socket.off("updateRoom", updateRoomDetails);
-        socket.off("gameReadyResponse", playGame);
-      }
+      socket.off("gameUpdated", handleGameDetails);
+      socket.off("roomClosed", handleRoomClosed);
+      socket.off("gameStarted", handleGameStarted);
+      socket.off("handDealt", handleHandDealt);
     };
-  }, [id, user.userId, socket, hasJoined]);
+  }, [user.token, socket, roomId]); // Dépendance pour recharger les decks si le token change
 
-  const startGame = () => {
-    socket.emit("gameReady", { roomId: id });
+  const fetchData = async () => {
+    if (user.token) {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/decks`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${user.token}`,
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Réponse non valide");
+        }
+
+        const data = await response.json();
+        setDecks(data);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des decks :", error);
+      }
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/games/${roomId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${user.token}`,
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Réponse non valide");
+        }
+
+        const data = await response.json();
+        console.log("infos room:", data);
+        setGameDetails(data);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des infos de la partie :",
+          error
+        );
+      }
+    }
   };
 
-  const leaveRoom = async () => {
+  const handleSelectDeck = (e) => {
+    setSelectedDeck(e.target.value);
+    socket.emit("selectDeck", {
+      deck: e.target.value,
+      roomId,
+      playerId: user.userId,
+    });
+  };
+
+  const handleLeaveGame = () => {
+    socket.emit("leaveGame", { roomId, playerId: user.userId });
     navigate("/games");
-    sessionStorage.removeItem("roomDetails");
   };
 
-  const handleDeckSelection = (e) => {
-    if (e) {
-      setSelectedDeckId(e.target.value);
-      socket.emit("deckSelected", {
-        roomId: id,
-        deckId: e.target.value,
-        userId: user.userId,
-      });
-    }
+  const handleStartGame = () => {
+    socket.emit("startGame", { roomId });
   };
-
-  const fetchRoomInfos = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/games/${id}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Réponse non valide");
-      }
-      const data = await response.json();
-      setRoomDetails(data);
-
-      sessionStorage.setItem("roomDetails", JSON.stringify(data));
-
-      if (data.isCreator) {
-        setIsCreator(true);
-      }
-    } catch (error) {
-      console.error("Erreur lors de la connection à la partie:", error);
-    }
-  };
-
-  const fetchDecks = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/decks`,
-        {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Erreur lors de la récupération des decks");
-      }
-      const data = await response.json();
-      setDecks(data);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des decks:", error);
-    }
-  };
-
-  const players = [roomDetails?.player1, roomDetails?.player2].filter(Boolean);
 
   return (
-    <div className="page-content">
-      <h1>Room: {roomDetails?.name}</h1>
-      <h2>Joueurs:</h2>
-      <ul>
-        {players.map((player) => (
-          <li key={player._id}>{player.username}</li>
-        ))}
-      </ul>
-      <select value={selectedDeckId} onChange={handleDeckSelection}>
-        {selectedDeckId === "" && (
-          <option value="">Sélectionner un deck</option>
-        )}
-        {decks.map((deck) => (
-          <option key={deck._id} value={deck._id}>
-            {deck.name}
-          </option>
-        ))}
-      </select>
-      {isCreator && players.length === 2 && (
-        <button className="start-btn" onClick={startGame}>
-          Lancer
-        </button>
+    <>
+      {!gameStarted ? (
+        <div>
+          {gameDetails && (
+            <>
+              <h1>Room: {gameDetails.name}</h1>
+              <div>Joueurs:</div>
+              {gameDetails.players.map((player, index) => (
+                <div key={index}>{player.user.username}</div> // Assurez-vous que `username` est la propriété correcte
+              ))}
+            </>
+          )}
+          <select value={selectedDeck} onChange={handleSelectDeck}>
+            <option value="">Sélectionner un deck</option>
+            {decks.map((deck) => (
+              <option key={deck._id} value={deck._id}>
+                {deck.name}
+              </option>
+            ))}
+          </select>
+          <button onClick={handleLeaveGame}>Quitter</button>
+          {user.userId === gameDetails?.creator && (
+            <button onClick={handleStartGame}>Lancer</button>
+          )}
+        </div>
+      ) : (
+          <>
+          {myHand.map((card, index) => (
+            <div className="test" key={index}>
+              <p>{card.name}</p>
+              <img src={card.imageUrl} alt={card.name} />
+            </div>
+          ))}
+        </>
       )}
-      <button className="leave-btn" onClick={leaveRoom}>
-        Quitter
-      </button>
-    </div>
+    </>
   );
 };
 

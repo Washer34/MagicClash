@@ -1,25 +1,13 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import io from "socket.io-client";
+import React, { createContext, useContext } from "react";
 
-const SocketContext = createContext();
+const SocketContext = createContext(null);
 
-export function useSocket() {
+export const useSocket = () => {
   return useContext(SocketContext);
-}
+};
 
-export const SocketProvider = ({ children }) => {
-  const [socket, setSocket] = useState(null);
-
-  useEffect(() => {
-    const newSocket = io("http://localhost:3000");
-    setSocket(newSocket);
-
-    return () => newSocket.close();
-  }, []);
-
+export const SocketProvider = ({ children, socket }) => {
   return (
-    <SocketContext.Provider value={socket}>
-      {children}
-    </SocketContext.Provider>
+    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
   );
 };
