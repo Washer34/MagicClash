@@ -6,29 +6,45 @@ import { userAtom } from "../../atoms/userAtom";
 import { useSocket } from "../../SocketContext";
 
 const Lobby = () => {
-  const [parties, setParties] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user] = useAtom(userAtom);
   const [roomName, setRoomName] = useState("");
   const navigate = useNavigate();
   const socket = useSocket();
 
-  const gameCreatedListener = (newGame) => {
-    setParties((prevParties) => [...prevParties, newGame]);
-  };
+  useEffect(() => {
+    if (!socket) return;
+    setLoading(true);
 
-  const gameDeletedListener = ({ gameId }) => {
-    setParties((currentParties) =>
-      currentParties.filter((party) => party._id !== gameId)
-    );
-  };
-
-  const checkIfGame = () => {
-    const game = JSON.parse(sessionStorage.getItem("roomDetails"));
-    if (game) {
-      navigate("/room/" + game._id);
+    if (user.token) {
+      fetchGames();
     }
-  };
+
+    const handleGameCreated = (game) => {
+      setRooms((prevRooms) => [...prevRooms, game]);
+      console.log("gamecreated", game);
+    };
+
+    const handleGameDeleted = ({ roomId }) => {
+      setRooms((prevRooms) => prevRooms.filter((room) => room._id !== roomId));
+    };
+
+    socket.on("gameCreated", handleGameCreated);
+    socket.on("gameDeleted", handleGameDeleted);
+
+    const handleGameCreatedForCreator = ({ gameId }) => {
+      console.log("reçu");
+      navigate(`/room/${gameId}`);
+    };
+    socket.on("gameCreatedForCreator", handleGameCreatedForCreator);
+
+    return () => {
+      socket.off("gameCreated", handleGameCreated);
+      socket.off("gameDeleted", handleGameDeleted);
+      socket.off("gameCreatedForCreator", handleGameCreatedForCreator);
+    };
+  }, [user.token, socket]);
 
   const fetchGames = () => {
     fetch(`${import.meta.env.VITE_API_URL}/api/games`, {
@@ -38,7 +54,7 @@ const Lobby = () => {
     })
       .then((response) => response.json())
       .then((data) => {
-        setParties(data);
+        setRooms(data);
         setLoading(false);
       })
       .catch((error) => {
@@ -47,82 +63,19 @@ const Lobby = () => {
       });
   };
 
-  useEffect(() => {
-    setLoading(true);
-    checkIfGame();
-
-    if (socket == null) return;
-    socket.on("gameCreated", gameCreatedListener);
-    socket.on("gameDeleted", gameDeletedListener);
-
-    if (user.token) {
-      fetchGames();
-    }
-
-    return () => {
-      socket.off("gameCreated", gameCreatedListener);
-      socket.off("gameDeleted", gameDeletedListener);
-    };
-  }, [user.token, socket]);
-
-  const handleJoinParty = async (partyId) => {
-    if (partyId) {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/games/${partyId}/join`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${user.token}`,
-            },
-            body: JSON.stringify({ userId: user._id }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Erreur lors de la connection à la partie");
-        }
-
-        await response.json(); // Si vous avez besoin de traiter la réponse JSON
-        socket.emit("joinRoom", { roomId: partyId });
-
-        navigate(`/room/${partyId}`); // Redirige vers la page de la room après la jointure
-      } catch (error) {
-        console.error("Erreur lors de la jointure de la partie:", error);
-        // Ici, vous pouvez gérer l'affichage des erreurs dans l'interface utilisateur
-        // Par exemple, en mettant à jour l'état d'une variable pour afficher un message d'erreur à l'utilisateur
-      }
-    }
-  };
-
-  const handleCreateParty = async (e) => {
+  const handleCreateRoom = (e) => {
     e.preventDefault();
 
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/games`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-          body: JSON.stringify({ name: roomName }),
-        }
-      );
-      const newGame = await response.json();
+    if (!roomName.trim()) return;
+    console.log(roomName);
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de la création de la partie");
-      }
+    socket.emit("createGame", { name: roomName, creator: user.userId });
+  };
 
+  const handleJoinRoom = (gameId) => {
+    socket.emit("joinGame", { gameId, playerId: user.userId });
 
-      navigate(`/room/${newGame._id}`);
-      socket.emit("joinRoom", { roomId: newGame._id });
-    } catch (error) {
-      console.error("Erreur lors de la création de la partie", error);
-    }
+    navigate(`/room/${gameId}`);
   };
 
   return (
@@ -132,7 +85,7 @@ const Lobby = () => {
         <p>Chargement...</p>
       ) : (
         <div>
-          <form onSubmit={handleCreateParty}>
+          <form onSubmit={handleCreateRoom}>
             <input
               type="text"
               value={roomName}
@@ -142,15 +95,12 @@ const Lobby = () => {
             />
             <button type="submit">Créer une Partie</button>
           </form>
-          {parties.map((party) => (
-            <div key={party._id}>
-              <p>Partie {party.name}</p>
-              <p>
-                Nombre de joueurs:{" "}
-                {party.player1 ? 1 : 0 + party.player2 ? 1 : 0}
-              </p>
-              <p>Status: {party.status}</p>
-              <button onClick={() => handleJoinParty(party._id)}>
+          {rooms.map((room) => (
+            <div key={room._id}>
+              <p>Partie {room.name}</p>
+              <p>Nombre de joueurs: {room.players.length} </p>
+              <p>Status: {room.status}</p>
+              <button onClick={() => handleJoinRoom(room._id)}>
                 Rejoindre
               </button>
             </div>
