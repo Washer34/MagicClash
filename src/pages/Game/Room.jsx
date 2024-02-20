@@ -3,8 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAtom } from "jotai";
 import { userAtom } from "../../atoms/userAtom";
 import { useSocket } from "../../SocketContext";
+import { toast } from 'react-toastify'
 
-import './Room.css'
+import "./Room.css";
 
 const Room = () => {
   const [user] = useAtom(userAtom);
@@ -14,52 +15,75 @@ const Room = () => {
   const [gameDetails, setGameDetails] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [myHand, setMyHand] = useState([]);
+  const [allPlayersReady, setAllPlayersReady] = useState(false);
   const navigate = useNavigate();
   const { roomId } = useParams();
-  const socket = useSocket();
+  const {socket, isSocketConnected} = useSocket();
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!isSocketConnected || !socket) return;
 
     setLoading(true);
 
-    const handleGameDetails = (details) => {
-      setGameDetails(details);
-      console.log(details);
-    };
+    if (socket && roomId) {
+      socket.emit("requestGameDetails", { roomId });
+      console.log("je demande les détails: ", roomId);
+    }
 
-    const handleRoomClosed = () => {
+    socket.on("gameDetails", ({ updatedGame }) => {
+      console.log("gameDetails", updatedGame);
+      setGameDetails(updatedGame);
+      setLoading(false);
+    });
+
+    socket.on("gameUpdated", ({ updatedGame, allPlayersReady }) => {
+      console.log("gameUpdated", updatedGame);
+      setGameDetails(updatedGame);
+      setAllPlayersReady(allPlayersReady);
+      console.log("allPlayersReady", allPlayersReady);
+      setLoading(false);
+    });
+
+    socket.on("playerReadyUpdate", ({ userId, isReady }) => {
+      setGameDetails((currentDetails) => {
+        const updatedPlayers = currentDetails.players.map((player) => {
+          if (player.user._id === userId) {
+            return { ...player, isReady };
+          }
+          return player;
+        });
+        return { ...currentDetails, players: updatedPlayers };
+      });
+    });
+
+    socket.on("gameDeleted", ({ message }) => {
+      toast.warn(message, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
       navigate("/games");
-      console.log("l'hôte a quitté");
-    };
-
-    const handleGameStarted = () => {
-      setGameStarted(true);
-    };
-
-    const handleHandDealt = ({ hand }) => {
-      setMyHand(hand);
-      console.log(hand);
-    };
-
-    socket.on("gameUpdated", handleGameDetails);
-    socket.on("roomClosed", handleRoomClosed);
-    socket.on("gameStarted", handleGameStarted);
-    socket.on("handDealt", handleHandDealt);
+    });
 
     fetchData();
 
     return () => {
-      socket.off("gameUpdated", handleGameDetails);
-      socket.off("roomClosed", handleRoomClosed);
-      socket.off("gameStarted", handleGameStarted);
-      socket.off("handDealt", handleHandDealt);
+      socket.off("gameDetails");
+      socket.off("gameUpdated");
+      socket.off("playerReadyUpdate");
+      socket.off("gameDeleted");
     };
-  }, [user.token, socket, roomId]); // Dépendance pour recharger les decks si le token change
+  }, [user.token, socket, roomId, isSocketConnected]); // Dépendance pour recharger les decks si le token change
 
   const fetchData = async () => {
     if (user.token) {
       try {
+        // Requête pour récupérer les decks de l'utilisateur
         const response = await fetch(
           `${import.meta.env.VITE_API_URL}/api/decks`,
           {
@@ -69,39 +93,19 @@ const Room = () => {
             },
           }
         );
+
         if (!response.ok) {
-          throw new Error("Réponse non valide");
+          throw new Error("Réponse non valide de l'API pour les decks");
         }
 
         const data = await response.json();
-        setDecks(data);
+        setDecks(data); // Mettre à jour l'état local avec les decks récupérés
       } catch (error) {
         console.error("Erreur lors de la récupération des decks :", error);
       }
 
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/games/${roomId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Réponse non valide");
-        }
-
-        const data = await response.json();
-        console.log("infos room:", data);
-        setGameDetails(data);
-      } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des infos de la partie :",
-          error
-        );
-      }
+      // Vous pourriez également vouloir récupérer d'autres informations ici,
+      // comme les détails de la partie actuelle si cela n'a pas déjà été fait.
     }
   };
 
@@ -111,6 +115,15 @@ const Room = () => {
       deck: e.target.value,
       roomId,
       playerId: user.userId,
+    });
+  };
+
+  const handleisReady = (e) => {
+    setIsReady(e.target.checked);
+    socket.emit("playerReady", {
+      roomId,
+      userId: user.userId,
+      isReady: e.target.checked,
     });
   };
 
@@ -132,7 +145,12 @@ const Room = () => {
               <h1>Room: {gameDetails.name}</h1>
               <div>Joueurs:</div>
               {gameDetails.players.map((player, index) => (
-                <div key={index}>{player.user.username}</div> // Assurez-vous que `username` est la propriété correcte
+                <div key={index}>
+                  {player.user.username}{" "}
+                  {gameDetails.playersReady.includes(player.user._id)
+                    ? "OK"
+                    : ""}
+                </div> // Assurez-vous que `username` est la propriété correcte
               ))}
             </>
           )}
@@ -144,13 +162,17 @@ const Room = () => {
               </option>
             ))}
           </select>
+          <label>
+            <input type="checkbox" checked={isReady} onChange={handleisReady} />
+            Je suis prêt
+          </label>
           <button onClick={handleLeaveGame}>Quitter</button>
-          {user.userId === gameDetails?.creator && (
+          {allPlayersReady && gameDetails.creator._id === user.userId && (
             <button onClick={handleStartGame}>Lancer</button>
           )}
         </div>
       ) : (
-          <>
+        <>
           {myHand.map((card, index) => (
             <div className="test" key={index}>
               <p>{card.name}</p>

@@ -6,8 +6,8 @@ export const useSocket = () => {
   return useContext(SocketContext);
 };
 
-export const SocketProvider = ({ children, socket }) => {
+export const SocketProvider = ({ children, socket, isSocketConnected }) => {
   return (
-    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
+    <SocketContext.Provider value={{socket, isSocketConnected}}>{children}</SocketContext.Provider>
   );
 };
