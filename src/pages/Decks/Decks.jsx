@@ -34,7 +34,8 @@ const Decks = () => {
     fetchData();
   }, [user.token]);
 
-  const createNewDeck = () => {
+  const createNewDeck = (e) => {
+    e.preventDefault();
     fetch(`${import.meta.env.VITE_API_URL}/api/decks`, {
       method: 'POST',
       headers: {
@@ -57,19 +58,23 @@ const Decks = () => {
     <div className="decks-container">
       <h2>Mes Decks</h2>
       <div className="create-deck">
-        <input
-          type="text"
-          placeholder="Nom du deck"
-          value={newDeckName}
-          onChange={(e) => setNewDeckName(e.target.value)}
-        />
-        <button onClick={createNewDeck}>Créer un deck</button>
+        <form onSubmit={createNewDeck}>
+          <input
+            type="text"
+            placeholder="Nom du deck"
+            value={newDeckName}
+            onChange={(e) => setNewDeckName(e.target.value)}
+          />
+          <button type='submit'>Créer un deck</button>
+        </form>
       </div>
       {decks.length > 0 ? (
         <div className="deck-list">
           {decks.map((deck) => (
             <div key={deck._id} className="deck-item">
-              <h3><Link to={`/decks/${deck._id}`}>{deck.name}</Link></h3>
+              <h3>
+                <Link to={`/decks/${deck._id}`}>{deck.name}</Link>
+              </h3>
               {/* Affichez les cartes du deck ici si nécessaire */}
             </div>
           ))}

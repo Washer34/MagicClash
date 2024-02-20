@@ -11,69 +11,44 @@ const Lobby = () => {
   const [user] = useAtom(userAtom);
   const [roomName, setRoomName] = useState("");
   const navigate = useNavigate();
-  const socket = useSocket();
+  const {socket, isSocketConnected} = useSocket();
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !isSocketConnected) return;
     setLoading(true);
 
-    if (user.token) {
-      fetchGames();
-    }
+    socket.emit("requestGames");
 
-    const handleGameCreated = (game) => {
-      setRooms((prevRooms) => [...prevRooms, game]);
-      console.log("gamecreated", game);
-    };
+    socket.on("updateGamesList", (games) => {
+      setRooms(games);
+      setLoading(false);
+    });
 
-    const handleGameDeleted = ({ roomId }) => {
-      setRooms((prevRooms) => prevRooms.filter((room) => room._id !== roomId));
-    };
+    socket.on("gamesListUpdated", () => {
+      socket.emit("requestGames");
+    })
 
-    socket.on("gameCreated", handleGameCreated);
-    socket.on("gameDeleted", handleGameDeleted);
-
-    const handleGameCreatedForCreator = ({ gameId }) => {
-      console.log("reçu");
-      navigate(`/room/${gameId}`);
-    };
-    socket.on("gameCreatedForCreator", handleGameCreatedForCreator);
+    socket.on("createdGame", (game) => {
+      navigate(`/room/${game.gameId}`);
+    })
 
     return () => {
-      socket.off("gameCreated", handleGameCreated);
-      socket.off("gameDeleted", handleGameDeleted);
-      socket.off("gameCreatedForCreator", handleGameCreatedForCreator);
+      socket.off("updateGamesList");
+      socket.off("createdGame");
+      socket.off("gamesListUpdated");
     };
-  }, [user.token, socket]);
-
-  const fetchGames = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/games`, {
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setRooms(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Erreur lors du chargement des parties:", error);
-        setLoading(false);
-      });
-  };
+  }, [socket, isSocketConnected]);
 
   const handleCreateRoom = (e) => {
     e.preventDefault();
 
     if (!roomName.trim()) return;
-    console.log(roomName);
 
     socket.emit("createGame", { name: roomName, creator: user.userId });
   };
 
   const handleJoinRoom = (gameId) => {
-    socket.emit("joinGame", { gameId, playerId: user.userId });
+    socket.emit("joinGame", { roomId: gameId, userId: user.userId });
 
     navigate(`/room/${gameId}`);
   };
@@ -96,13 +71,21 @@ const Lobby = () => {
             <button type="submit">Créer une Partie</button>
           </form>
           {rooms.map((room) => (
-            <div key={room._id}>
+            <div
+              key={room._id}
+              style={{ color: room.status === "inProgress" ? "red" : "green" }}
+            >
               <p>Partie {room.name}</p>
               <p>Nombre de joueurs: {room.players.length} </p>
-              <p>Status: {room.status}</p>
-              <button onClick={() => handleJoinRoom(room._id)}>
-                Rejoindre
-              </button>
+              <p>
+                Statut:{" "}
+                {room.status === "inProgress" ? "En cours" : "En attente"}
+              </p>
+              {room.status === "waiting" && (
+                <button onClick={() => handleJoinRoom(room._id)}>
+                  Rejoindre
+                </button>
+              )}
             </div>
           ))}
         </div>

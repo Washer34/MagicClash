@@ -26,17 +26,24 @@ const DeckDetail = () => {
         });
 
         if (!response.ok) {
-          throw new Error('Réponse non valide');
+          let errorMsg = `erreur ${response.status} (${response.statusText})`;
+          try {
+            const errorData = await response.json();
+            errorMsg += ': ' + (errorData.message || JSON.stringify(errorData));
+          } catch (error) {
+            errorMsg += ` - la réponse n'est pas un JSON valide: ${response.statusText}`
+          }
+          throw new Error(errorMsg);
         }
 
         const data = await response.json();
         setDeck(data);
       } catch (error) {
-        console.error('Erreur lors de la récupération des détails du deck :', error);
+        console.error('Erreur lors de la récupération des détails du deck :', error.message);
       }
     };
 
-    if (id) {
+    if (id && user.token) {
       fetchDeckDetail();
     }
   }, [id, user.token]);
@@ -45,7 +52,8 @@ const DeckDetail = () => {
     return <div>Chargement en cours...</div>;
   }
 
-  const handleSearch = async () => {
+  const handleSearch = async (e) => {
+    e.preventDefault();
     const url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchTerm)}`;
     try {
       const response = await fetch(url);
@@ -172,18 +180,20 @@ const DeckDetail = () => {
 
 
   return (
-    <div className='deck-container'>
-      <h2 className='deck-title'>{deck.name}</h2>
+    <div className="deck-container">
+      <h2 className="deck-title">{deck.name}</h2>
       <div className="deck-detail-container">
         <div className="deck-list-panel">
-          <div className='deck-detailed'>
+          <div className="deck-detailed">
             <ul>
               {groupCardsByScryfallId(deck.cards).map((card, index) => (
                 <li key={`${card.scryfallId}_${index}`}>
                   <img src={card.imageUrl} alt={card.name} />
                   <p>{card.name}</p>
                   <div>
-                    <button onClick={() => decreaseCardInDeck(card.scryfallId)}>-</button>
+                    <button onClick={() => decreaseCardInDeck(card.scryfallId)}>
+                      -
+                    </button>
                     <span> {card.quantity} </span>
                     <button onClick={() => addCardToSelected(card)}>+</button>
                   </div>
@@ -195,18 +205,27 @@ const DeckDetail = () => {
         <div className="search-panel">
           <div className="search-section">
             <h3>Ajouter une carte</h3>
-            <input
-              type="text"
-              placeholder="Rechercher des cartes"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button onClick={handleSearch}>Rechercher</button>
-            <div className='search-results'>
+            <form onSubmit={handleSearch}>
+              <input
+                type="text"
+                placeholder="Rechercher des cartes"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <button type='submit'>Rechercher</button>
+            </form>
+            <div className="search-results">
               {searchResults.map((card) => (
-                <div className='search-card' key={card.id} onClick={() => addCardToDeck(card)}>
+                <div
+                  className="search-card"
+                  key={card.id}
+                  onClick={() => addCardToDeck(card)}
+                >
                   {card.card_faces && card.card_faces[0].image_uris ? (
-                    <img src={card.card_faces[0].image_uris.png} alt={card.card_faces[0].name} />
+                    <img
+                      src={card.card_faces[0].image_uris.png}
+                      alt={card.card_faces[0].name}
+                    />
                   ) : card.image_uris && card.image_uris.png ? (
                     <img src={card.image_uris.png} alt={card.name} />
                   ) : (
@@ -227,9 +246,13 @@ const DeckDetail = () => {
                   <img src={card.imageUrl} alt={card.name} />
                   <p>{card.name}</p>
                   <div>
-                    <button onClick={() => decreaseQuantity(card.scryfallId)}>-</button>
+                    <button onClick={() => decreaseQuantity(card.scryfallId)}>
+                      -
+                    </button>
                     <span> {card.quantity} </span>
-                    <button onClick={() => increaseQuantity(card.scryfallId)}>+</button>
+                    <button onClick={() => increaseQuantity(card.scryfallId)}>
+                      +
+                    </button>
                   </div>
                 </li>
               ))}
