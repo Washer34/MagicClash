@@ -1,0 +1,33 @@
+.deck-card {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.deck-card:hover {
+  transform: scale(1.05);
+}
+
+.deck-card.selected {
+  border-color: #007bff; /* Changez cette couleur selon vos préférences */
+}
+
+.deck-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+}
+
+.deck-selection {
+  justify-content: center;
+}
+
+.deck-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}

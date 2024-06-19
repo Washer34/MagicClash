@@ -1,0 +1,83 @@
+.game-details {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.players-list {
+  margin-top: 20px;
+}
+
+.players-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.players-list li {
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+}
+
+.ready-status {
+  margin-left: 10px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: white;
+}
+
+.not-ready {
+  background-color: red;
+}
+
+.ready {
+  background-color: green;
+}
+
+button.toggle-ready {
+  margin-left: 20px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #444;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+button.toggle-ready:hover {
+  background-color: #666;
+}
+
+.deck-selection {
+  margin-top: 20px;
+}
+
+.deck-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.deck-card {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.deck-card:hover {
+  transform: scale(1.05);
+}
+
+.deck-card.selected {
+  border-color: #007bff;
+}
+
+.deck-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+}

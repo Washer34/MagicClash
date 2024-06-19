@@ -1,16 +1,18 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useAtom } from "jotai";
-import { userAtom } from "../../atoms/userAtom";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutUser } from "../../store/slices/userSlice";
+
 
 import "./Navbar.css";
 
 const Navbar = () => {
-  const [user, setUser] = useAtom(userAtom);
+  const user = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    setUser({ isLoggedIn: false, username: null, token: null });
-    localStorage.removeItem("userInfos");
+    dispatch(logoutUser());
+    sessionStorage.removeItem("userInfos");
     navigate("/");
   };
 
@@ -26,7 +28,7 @@ const Navbar = () => {
           {user.isLoggedIn ? (
             <>
               <Link to="/decks">Mes Decks</Link>
-              <Link to="/games">Jouer</Link>
+              <Link to="/lobby">Jouer</Link>
               <a className="disconnect" onClick={handleLogout}>
                 Se Déconnecter
               </a>
