@@ -97,8 +97,7 @@ const DeckDetail = () => {
         }
       }
     });
-
-
+    
     fetch(`${import.meta.env.VITE_API_URL}/api/decks/${deck._id}`, {
       method: 'PUT',
       headers: {
