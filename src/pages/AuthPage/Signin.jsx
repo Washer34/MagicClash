@@ -1,12 +1,11 @@
-import { useAtom } from 'jotai';
-import { useNavigate } from 'react-router-dom'
-
-import { userAtom } from '../../atoms/userAtom';
-import './Form.css';
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { setUser } from "../../store/slices/userSlice";
+import "./Form.css";
 
 const Signin = () => {
   const navigate = useNavigate();
-  const [, setUser] = useAtom(userAtom);
+  const dispatch = useDispatch();
 
   const handleSigninSubmit = async (event) => {
     event.preventDefault();
@@ -14,29 +13,42 @@ const Signin = () => {
     const userData = Object.fromEntries(formData.entries());
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userData),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la connection');
+        throw new Error("Erreur lors de la connection");
       }
 
       const data = await response.json();
-      setUser({
-        isLoggedIn: true,
-        username: data.username,
-        token: data.token
-      });
-      localStorage.setItem('userInfos', JSON.stringify({ username: data.username, token: data.token }));
-      navigate('/');
+      console.log(data);
+      dispatch(
+        setUser({
+          username: data.username,
+          token: data.token,
+          userId: data.userId,
+        })
+      );
+      sessionStorage.setItem(
+        "userInfos",
+        JSON.stringify({
+          username: data.username,
+          token: data.token,
+          userId: data.userId,
+        })
+      );
 
+      navigate("/");
     } catch (error) {
-      console.error('Erreur de connection:', error);
+      console.error("Erreur de connection:", error);
     }
   };
 
@@ -54,6 +66,6 @@ const Signin = () => {
         </form>
       </div>
     </div>
-  )
-}
-export default Signin
+  );
+};
+export default Signin;
