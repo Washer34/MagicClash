@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useAtom } from "jotai";
-import { userAtom } from "./atoms/userAtom";
+import { useDispatch, useSelector } from "react-redux";
+import { setUser } from "./store/slices/userSlice";
 import { SocketProvider } from "./SocketContext";
 import io from "socket.io-client";
 import { ToastContainer } from "react-toastify";
@@ -15,11 +15,12 @@ import Signin from "./pages/AuthPage/Signin";
 import Signup from "./pages/AuthPage/Signup";
 import Decks from "./pages/Decks/Decks";
 import DeckDetail from "./pages/Decks/DeckDetail";
-import Lobby from "./pages/Game/Lobby";
-import Room from "./pages/Game/Room";
+import Lobby from "./pages/Lobby/Lobby";
+import GameDetails from "./pages/GameDetails/GameDetails";
 
 function App() {
-  const [user, setUser] = useAtom(userAtom);
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.user);
   const [socket, setSocket] = useState(null);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
 
@@ -27,23 +28,9 @@ function App() {
     const userInfosString = sessionStorage.getItem("userInfos");
     const userInfos = userInfosString ? JSON.parse(userInfosString) : null;
     if (userInfos) {
-      setUser((prev) => {
-        if (
-          prev.username !== userInfos.username ||
-          prev.token !== userInfos.token ||
-          prev.userId !== userInfos.userId
-        ) {
-          return {
-            isLoggedIn: true,
-            username: userInfos.username,
-            token: userInfos.token,
-            userId: userInfos.userId,
-          };
-        }
-        return prev;
-      });
+      dispatch(setUser(userInfos));
     }
-  }, [setUser]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (user.userId && !socket) {
@@ -66,7 +53,7 @@ function App() {
         newSocket.close();
       };
     }
-  }, [user.userId]);
+  }, [user]);
 
   return (
     <SocketProvider socket={socket} isSocketConnected={isSocketConnected}>
@@ -81,8 +68,8 @@ function App() {
               <Route path="/signup" element={<Signup />} />
               <Route path="/decks" element={<Decks />} />
               <Route path="/decks/:id" element={<DeckDetail />} />
-              <Route path="/games" element={<Lobby />} />
-              <Route path="/room/:roomId" element={<Room />} />
+              <Route path="/lobby" element={<Lobby />} />
+              <Route path="/game/:gameId" element={<GameDetails />} />
             </Routes>
 
             <ToastContainer />

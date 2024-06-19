@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useAtom } from 'jotai';
-import { userAtom } from '../../atoms/userAtom';
+import { useSelector } from "react-redux";
 
 import './Decks.css';
 import noImage from '../../../public/assets/no-image.png'
 
 const DeckDetail = () => {
-  const [user] = useAtom(userAtom);
+  const user = useSelector((state) => state.user);
   const { id } = useParams();
   const [deck, setDeck] = useState(null);
   const [deckCards, setDeckCards] = useState([]);
