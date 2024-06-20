@@ -1,36 +1,40 @@
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-import './Decks.css';
-import noImage from '../../../public/assets/no-image.png'
+import "./Decks.css";
+import noImage from "../../../public/assets/no-image.png";
 
 const DeckDetail = () => {
   const user = useSelector((state) => state.user);
   const { id } = useParams();
   const [deck, setDeck] = useState(null);
   const [deckCards, setDeckCards] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [file, setFile] = useState(null);
   const [modifiedCards, setModifiedCards] = useState(new Map());
 
   useEffect(() => {
     const fetchDeckDetail = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/decks/${id}`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/decks/${id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${user.token}`,
+            },
+          }
+        );
 
         if (!response.ok) {
           let errorMsg = `erreur ${response.status} (${response.statusText})`;
           try {
             const errorData = await response.json();
-            errorMsg += ': ' + (errorData.message || JSON.stringify(errorData));
+            errorMsg += ": " + (errorData.message || JSON.stringify(errorData));
           } catch (error) {
-            errorMsg += ` - la réponse n'est pas un JSON valide: ${response.statusText}`
+            errorMsg += ` - la réponse n'est pas un JSON valide: ${response.statusText}`;
           }
           throw new Error(errorMsg);
         }
@@ -38,7 +42,10 @@ const DeckDetail = () => {
         const data = await response.json();
         setDeck(data);
       } catch (error) {
-        console.error('Erreur lors de la récupération des détails du deck :', error.message);
+        console.error(
+          "Erreur lors de la récupération des détails du deck :",
+          error.message
+        );
       }
     };
 
@@ -53,36 +60,97 @@ const DeckDetail = () => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    const url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchTerm)}`;
+    const url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(
+      searchTerm
+    )}`;
     try {
       const response = await fetch(url);
       const data = await response.json();
       setSearchResults(data.data);
     } catch (error) {
-      console.error('Erreur lors de la recherche des cartes :', error);
+      console.error("Erreur lors de la recherche des cartes :", error);
     }
   };
-  // MISE A JOUR ?
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  const handleFileUpload = () => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const text = e.target.result;
+        const cardLines = text
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+        const deckCardsFromImport = await Promise.all(
+          cardLines.map(async (line) => {
+            const [quantity, ...nameParts] = line.split(" ");
+            const name = nameParts.join(" ");
+            const quantityInt = parseInt(quantity, 10);
+
+            const response = await fetch(
+              `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(
+                name
+              )}`
+            );
+            const cardData = await response.json();
+
+            const imageUrl =
+              cardData.card_faces && cardData.card_faces[0].image_uris
+                ? cardData.card_faces[0].image_uris.png
+                : cardData.image_uris
+                ? cardData.image_uris.png
+                : noImage;
+
+            const cards = Array(quantityInt).fill({
+              name: cardData.name,
+              scryfallId: cardData.id,
+              imageUrl: imageUrl,
+              quantity: 1, // Set initial quantity to 1
+            });
+
+            return cards;
+          })
+        );
+
+        setDeckCards([...deckCards, ...deckCardsFromImport.flat()]);
+      };
+      reader.readAsText(file);
+    }
+  };
+
+
 
   const addCardToDeck = (card) => {
-    const existingCardIndex = deckCards.findIndex(c => c.scryfallId === card.id);
+    const existingCardIndex = deckCards.findIndex(
+      (c) => c.scryfallId === card.id
+    );
     if (existingCardIndex !== -1) {
-      // Copie et mise à jour de la quantité
-      let newDeckCards = [...deckCards];
-      newDeckCards[existingCardIndex] = {
-        ...newDeckCards[existingCardIndex],
-        quantity: (newDeckCards[existingCardIndex].quantity || 1) + 1
-      };
+      const newDeckCards = [...deckCards];
+      newDeckCards[existingCardIndex].quantity += 1;
       setDeckCards(newDeckCards);
     } else {
-      let savedImageUrl = card.image_uris?.png || card.card_faces?.[0].image_uris?.png || noImage;
-      setDeckCards([...deckCards, { name: card.name, imageUrl: savedImageUrl, scryfallId: card.id, quantity: 1 }]);
+      setDeckCards([
+        ...deckCards,
+        {
+          name: card.name,
+          imageUrl:
+            card.image_uris?.png ||
+            card.card_faces?.[0].image_uris?.png ||
+            noImage,
+          scryfallId: card.id,
+          quantity: 1,
+        },
+      ]);
     }
   };
 
   const saveDeck = () => {
-    // Construction du tableau final à envoyer, avec les quantités respectées
-    let cardsToSend = [];
+    let cardsToSend = [...deck.cards];
 
     modifiedCards.forEach((value, key) => {
       for (let i = 0; i < value.quantity; i++) {
@@ -90,26 +158,31 @@ const DeckDetail = () => {
       }
     });
 
-    deckCards.forEach(card => {
+    deckCards.forEach((card) => {
       if (!modifiedCards.has(card.scryfallId)) {
         for (let i = 0; i < (card.quantity || 1); i++) {
-          cardsToSend.push({ name: card.name, imageUrl: card.imageUrl, scryfallId: card.scryfallId });
+          cardsToSend.push({
+            name: card.name,
+            imageUrl: card.imageUrl,
+            scryfallId: card.scryfallId,
+          });
         }
       }
     });
-    
+
     fetch(`${import.meta.env.VITE_API_URL}/api/decks/${deck._id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${user.token}`,
       },
-      body: JSON.stringify({ ...deck, cards: [...deck.cards, ...cardsToSend] }),
+      body: JSON.stringify({ ...deck, cards: cardsToSend }),
     })
       .then((response) => response.json())
       .then((updatedDeck) => {
         setDeck(updatedDeck);
         setDeckCards([]);
+        setModifiedCards(new Map());
       })
       .catch((error) => {
         console.error("Erreur lors de l'enregistrement du deck :", error);
@@ -117,43 +190,35 @@ const DeckDetail = () => {
   };
 
   const increaseQuantity = (cardId) => {
-    setDeckCards(deckCards.map(c =>
-      c.scryfallId === cardId ? { ...c, quantity: c.quantity + 1 } : c
-    ));
+    setDeckCards(
+      deckCards.map((c) =>
+        c.scryfallId === cardId ? { ...c, quantity: c.quantity + 1 } : c
+      )
+    );
   };
 
   const decreaseQuantity = (cardId) => {
-    setDeckCards(deckCards
-      .map(c =>
-        c.scryfallId === cardId ? { ...c, quantity: c.quantity - 1 } : c
-      )
-      .filter(c => c.quantity > 0));
-  };
-
-  const updateCardQuantityInDeck = (cardId, change) => {
-    setModifiedCards(prev => {
-      const currentQuantity = prev.get(cardId)?.quantity ?? deck.cards.find(c => c.scryfallId === cardId)?.quantity ?? 0;
-      const newQuantity = Math.max(0, currentQuantity + change);
-      if (newQuantity > 0) {
-        return new Map(prev).set(cardId, { ...prev.get(cardId), quantity: newQuantity });
-      } else {
-        const updated = new Map(prev);
-        updated.delete(cardId);
-        return updated;
-      }
-    });
+    setDeckCards(
+      deckCards
+        .map((c) =>
+          c.scryfallId === cardId ? { ...c, quantity: c.quantity - 1 } : c
+        )
+        .filter((c) => c.quantity > 0)
+    );
   };
 
   const addCardToSelected = (card) => {
-    setDeck(deck => {
+    setDeck((deck) => {
       return { ...deck, cards: [...deck.cards, card] }; // Ajoute une nouvelle instance de la carte
     });
   };
 
   const decreaseCardInDeck = (cardId) => {
-    setDeck(deck => {
+    setDeck((deck) => {
       const newCards = [...deck.cards];
-      const cardIndex = newCards.findIndex(card => card.scryfallId === cardId);
+      const cardIndex = newCards.findIndex(
+        (card) => card.scryfallId === cardId
+      );
       if (cardIndex !== -1) {
         newCards.splice(cardIndex, 1);
       }
@@ -164,7 +229,7 @@ const DeckDetail = () => {
   const groupCardsByScryfallId = (cards) => {
     const groupedCards = new Map();
 
-    cards.forEach(card => {
+    cards.forEach((card) => {
       const existingCard = groupedCards.get(card.scryfallId);
       if (existingCard) {
         existingCard.quantity += 1;
@@ -176,10 +241,11 @@ const DeckDetail = () => {
     return Array.from(groupedCards.values());
   };
 
-
   return (
     <div className="deck-container">
-      <h2 className="deck-title">{deck.name}</h2>
+      <h2 className="deck-title">
+        {deck.name} ({deck.cards.length} cartes)
+      </h2>
       <div className="deck-detail-container">
         <div className="deck-list-panel">
           <div className="deck-detailed">
@@ -189,11 +255,19 @@ const DeckDetail = () => {
                   <img src={card.imageUrl} alt={card.name} />
                   <p>{card.name}</p>
                   <div>
-                    <button onClick={() => decreaseCardInDeck(card.scryfallId)}>
+                    <button
+                      className="quantity-button"
+                      onClick={() => decreaseCardInDeck(card.scryfallId)}
+                    >
                       -
                     </button>
-                    <span> {card.quantity} </span>
-                    <button onClick={() => addCardToSelected(card)}>+</button>
+                    <span className="quantity-button"> {card.quantity} </span>
+                    <button
+                      className="quantity-button"
+                      onClick={() => addCardToSelected(card)}
+                    >
+                      +
+                    </button>
                   </div>
                 </li>
               ))}
@@ -201,6 +275,11 @@ const DeckDetail = () => {
           </div>
         </div>
         <div className="search-panel">
+          <div className="import-section">
+            <h3>Importer des cartes depuis un fichier</h3>
+            <input type="file" onChange={handleFileChange} />
+            <button onClick={handleFileUpload}>Importer</button>
+          </div>
           <div className="search-section">
             <h3>Ajouter une carte</h3>
             <form onSubmit={handleSearch}>
@@ -210,7 +289,7 @@ const DeckDetail = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <button type='submit'>Rechercher</button>
+              <button type="submit">Rechercher</button>
             </form>
             <div className="search-results">
               {searchResults.map((card) => (
@@ -244,11 +323,17 @@ const DeckDetail = () => {
                   <img src={card.imageUrl} alt={card.name} />
                   <p>{card.name}</p>
                   <div>
-                    <button onClick={() => decreaseQuantity(card.scryfallId)}>
+                    <button
+                      className="quantity-button"
+                      onClick={() => decreaseQuantity(card.scryfallId)}
+                    >
                       -
                     </button>
-                    <span> {card.quantity} </span>
-                    <button onClick={() => increaseQuantity(card.scryfallId)}>
+                    <span className="quantity-button"> {card.quantity} </span>
+                    <button
+                      className="quantity-button"
+                      onClick={() => increaseQuantity(card.scryfallId)}
+                    >
                       +
                     </button>
                   </div>

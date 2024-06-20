@@ -94,6 +94,11 @@ button {
   align-items: center;
 }
 
+.deck-detailed .quantity-button, .selected-cards-section .quantity-button {
+  margin: 0;
+  padding: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .deck-detail-container {
     flex-direction: column;
