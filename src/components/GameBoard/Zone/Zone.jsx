@@ -1,4 +1,5 @@
 import { Rnd } from "react-rnd";
+import { useState } from "react";
 import "./Zone.css";
 
 const Zone = ({ title, cards, onCardClick, onCardMove }) => {
@@ -15,6 +16,8 @@ const Zone = ({ title, cards, onCardClick, onCardMove }) => {
         return "";
     }
   };
+
+  const [hoveredIndex, setHoveredIndex] = useState(null); 
 
   const cardClass = getClassForZone(title);
 
@@ -59,9 +62,8 @@ const Zone = ({ title, cards, onCardClick, onCardMove }) => {
               bottomLeft: false,
               topLeft: false,
             }}
-            style={{ zIndex: index }}
-            onMouseEnter={(e) => (e.currentTarget.style.zIndex = 1000)}
-            onMouseLeave={(e) => (e.currentTarget.style.zIndex = index)}
+            style={{ zIndex: index === hoveredIndex ? 1000 : index }}
+            onMouseEnter={() => setHoveredIndex(index)}
             disableDragging={!onCardMove}
           >
             <img
