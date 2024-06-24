@@ -1,0 +1,23 @@
+.zone {
+  width: 100%;
+  height: 100%;
+}
+
+.zone-cards {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.zone img {
+  margin: 5px;
+  width: 60px;
+  height: 80px;
+}
+
+.library-card img,
+.exile-card img,
+.graveyard-card img {
+  width: 60px;
+  height: 84px;
+}

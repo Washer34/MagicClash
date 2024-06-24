@@ -1,0 +1,30 @@
+.library {
+  text-align: center;
+  margin: 10px 0;
+}
+
+.library-cards {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.library-card {
+  position: relative;
+}
+
+.card {
+  width: 100px;
+  height: 140px;
+  border-radius: 5px;
+}
+
+.card-count {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px;
+  border-radius: 50%;
+}
