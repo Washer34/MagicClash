@@ -2,7 +2,7 @@ import { Rnd } from "react-rnd";
 import { useState } from "react";
 import "./Zone.css";
 
-const Zone = ({ title, cards, onCardClick, onCardMove }) => {
+const Zone = ({ title, cards, onCardClick, onCardMove, onCardDoubleClick }) => {
   const getClassForZone = (title) => {
     switch (title) {
       case "Bibliothèque Joueur":
@@ -21,7 +21,6 @@ const Zone = ({ title, cards, onCardClick, onCardMove }) => {
 
   const cardClass = getClassForZone(title);
 
-  console.log("Rendering Zone - title:", title, "cards:", cards);
 
   return (
     <div className="zone">
@@ -66,8 +65,9 @@ const Zone = ({ title, cards, onCardClick, onCardMove }) => {
             <img
               src={card.imageUrl}
               alt={card.name}
-              className={`card ${cardClass}`}
+              className={`card ${cardClass} ${card.tap ? "tapped" : ""}`}
               onClick={() => onCardClick(card)}
+              onDoubleClick={() => onCardDoubleClick(card)}
               style={{ width: "100%", height: "100%" }}
               draggable={false}
             />

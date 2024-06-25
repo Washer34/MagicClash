@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useSocket } from "../../SocketContext";
+import { DragDropContext, Droppable } from "react-beautiful-dnd";
+
 import cardBack from "../../../public/assets/card-back.webp";
 import Zone from "./Zone/Zone";
 import Hand from "./Hand/Hand";
 import InfosPanel from "./InfosPanel/InfosPanel";
 import Library from "./Library/Library";
 import LibraryMenu from "./Library/LibraryMenu/LibraryMenu";
-import { DragDropContext, Droppable } from "react-beautiful-dnd";
+import LibraryCards from "./Library/LibraryCards/LibraryCards";
 import "./GameBoard.css";
 
 const GameBoard = ({ gameId, inGameDetails }) => {
@@ -17,6 +19,8 @@ const GameBoard = ({ gameId, inGameDetails }) => {
   const [hand, setHand] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [libraryMenuVisible, setLibraryMenuVisible] = useState(false);
+  const [libraryCards, setLibraryCards] = useState([]);
+  const [libraryModalVisible, setLibraryModalVisible] = useState(false);
   const { socket } = useSocket();
 
   useEffect(() => {
@@ -49,11 +53,17 @@ const GameBoard = ({ gameId, inGameDetails }) => {
       setHand(updatedCurrentPlayer.hand);
     });
 
+    socket.on("library cards", (cards) => {
+      setLibraryCards(cards);
+      setLibraryModalVisible(true);
+    });
+
     return () => {
       document
         .querySelector(".app-container")
         .classList.remove("game-board-active");
       socket.off("ingame update");
+      socket.off("library cards");
     };
   }, [inGameDetails, user.username, socket]);
 
@@ -126,14 +136,37 @@ const GameBoard = ({ gameId, inGameDetails }) => {
   };
 
   const lookAtLibrary = () => {
-    console.log("Regarder la bibliothèque");
-    // Logique pour regarder la bibliothèque
+    socket.emit("look at library", {
+      gameId,
+      userId: user.userId,
+      number: null,
+    });
   };
 
   const lookAtTopCards = (number) => {
-    console.log(`Regarder les ${number} cartes du dessus`);
-    // Logique pour regarder les cartes du dessus
+    socket.emit("look at library", { gameId, userId: user.userId, number });
   };
+
+  const closeLibraryModal = () => {
+    setLibraryModalVisible(false);
+  };
+
+  const handleCardDoubleClick = (card) => {
+    const updatedCard = { ...card, tap: !card.tap };
+    setCurrentPlayer((prevPlayer) => ({
+      ...prevPlayer,
+      battlefield: prevPlayer.battlefield.map((c) =>
+        c.uuid === card.uuid ? updatedCard : c
+      ),
+    }));
+    socket.emit("tap card", {
+      gameId,
+      userId: user.userId,
+      cardId: card.uuid,
+      tap: !card.tap,
+    });
+  };
+
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -203,6 +236,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
                     cards={currentPlayer.battlefield}
                     onCardClick={handleCardClick}
                     onCardMove={handleCardMove}
+                    onCardDoubleClick={handleCardDoubleClick}
                   />
                   {provided.placeholder}
                 </div>
@@ -245,6 +279,13 @@ const GameBoard = ({ gameId, inGameDetails }) => {
             onDrawCards={drawCards}
             onLookAtLibrary={lookAtLibrary}
             onLookAtTopCards={lookAtTopCards}
+          />
+        )}
+        {libraryModalVisible && (
+          <LibraryCards
+            cards={libraryCards}
+            onClose={closeLibraryModal}
+            onCardClick={handleCardClick}
           />
         )}
       </div>
