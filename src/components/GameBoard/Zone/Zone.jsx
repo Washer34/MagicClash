@@ -17,7 +17,7 @@ const Zone = ({ title, cards, onCardClick, onCardMove }) => {
     }
   };
 
-  const [hoveredIndex, setHoveredIndex] = useState(null); 
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   const cardClass = getClassForZone(title);
 
@@ -26,13 +26,10 @@ const Zone = ({ title, cards, onCardClick, onCardMove }) => {
   return (
     <div className="zone">
       <h3>{title}</h3>
-      <div
-        className="zone-cards"
-        style={{ position: "relative", width: "100%", height: "100%" }}
-      >
+      <div className="zone-cards">
         {cards.map((card, index) => (
           <Rnd
-            key={`${title}-${card.scryfallId}-${index}`}
+            key={`${title}-${card.uuid}-${index}`}
             position={{
               x: card.position?.x || 0,
               y: card.position?.y || 0,
@@ -44,11 +41,11 @@ const Zone = ({ title, cards, onCardClick, onCardMove }) => {
             bounds="parent"
             onDragStop={(e, d) => {
               if (onCardMove) {
-                console.log("Card moved:", card.scryfallId, "to position:", {
+                console.log("Card moved:", card.uuid, "to position:", {
                   x: d.x,
                   y: d.y,
                 });
-                onCardMove(card.scryfallId, { x: d.x, y: d.y });
+                onCardMove(card.uuid, { x: d.x, y: d.y });
               }
             }}
             dragHandleClassName="card"

@@ -48,7 +48,7 @@ const Cards = () => {
       )}
       <div className="cards-grid">
         {cards.map(card => (
-          <div className="card" key={card.id} onClick={() => handleCardClick(card)}>
+          <div className="list-card" key={card.id} onClick={() => handleCardClick(card)}>
             <h3>{card.name}</h3>
             {card.card_faces && card.card_faces[0].image_uris ? (
               <img src={card.card_faces[0].image_uris.png} alt={card.card_faces[0].name} />

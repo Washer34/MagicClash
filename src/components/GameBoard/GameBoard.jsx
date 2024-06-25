@@ -6,6 +6,7 @@ import Zone from "./Zone/Zone";
 import Hand from "./Hand/Hand";
 import InfosPanel from "./InfosPanel/InfosPanel";
 import Library from "./Library/Library";
+import LibraryMenu from "./Library/LibraryMenu/LibraryMenu";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import "./GameBoard.css";
 
@@ -15,6 +16,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
   const [opponentPlayers, setOpponentPlayers] = useState([]);
   const [hand, setHand] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [libraryMenuVisible, setLibraryMenuVisible] = useState(false);
   const { socket } = useSocket();
 
   useEffect(() => {
@@ -31,7 +33,6 @@ const GameBoard = ({ gameId, inGameDetails }) => {
     setOpponentPlayers(opponentPlayers);
     setHand(currentPlayer.hand);
 
-    // Ajouter une classe à .app-container
     document.querySelector(".app-container").classList.add("game-board-active");
 
     socket.on("ingame update", (updatedGame) => {
@@ -45,10 +46,10 @@ const GameBoard = ({ gameId, inGameDetails }) => {
 
       setCurrentPlayer(updatedCurrentPlayer);
       setOpponentPlayers(updatedOpponentPlayers);
+      setHand(updatedCurrentPlayer.hand);
     });
 
     return () => {
-      // Retirer la classe lorsque le composant est démonté
       document
         .querySelector(".app-container")
         .classList.remove("game-board-active");
@@ -77,18 +78,17 @@ const GameBoard = ({ gameId, inGameDetails }) => {
     }
   };
 
-  const updateCardPosition = (cardId, position) => {
+  const updateCardPosition = (cardUuid, position) => {
     setCurrentPlayer((prevPlayer) => ({
       ...prevPlayer,
       battlefield: prevPlayer.battlefield.map((card) =>
-        card.scryfallId === cardId ? { ...card, position } : card
+        card.uuid === cardUuid ? { ...card, position } : card
       ),
     }));
   };
 
   const transformPositionForOpponent = (position) => {
-    console.log("transforme: ", position)
-    const battlefieldHeight = 1000;
+    console.log("transforme: ", position);
     return { x: position.x, y: position.y };
   };
 
@@ -100,16 +100,39 @@ const GameBoard = ({ gameId, inGameDetails }) => {
     setSelectedCard(card);
   };
 
-  const handleCardMove = (cardId, position) => {
-    if (currentPlayer.battlefield.some((card) => card.scryfallId === cardId)) {
-      updateCardPosition(cardId, position);
+  const handleCardMove = (cardUuid, position) => {
+    if (currentPlayer.battlefield.some((card) => card.uuid === cardUuid)) {
+      updateCardPosition(cardUuid, position);
       socket.emit("move card", {
         gameId,
         userId: user.userId,
-        cardId,
+        cardId: cardUuid,
         position,
       });
     }
+  };
+
+  const handleLibraryClick = () => {
+    setLibraryMenuVisible(true);
+  };
+
+  const closeLibraryMenu = () => {
+    setLibraryMenuVisible(false);
+  };
+
+  const drawCards = (number) => {
+    console.log(`Piocher ${number} cartes`);
+    socket.emit("draw x cards", { gameId, userId: user.userId, number });
+  };
+
+  const lookAtLibrary = () => {
+    console.log("Regarder la bibliothèque");
+    // Logique pour regarder la bibliothèque
+  };
+
+  const lookAtTopCards = (number) => {
+    console.log(`Regarder les ${number} cartes du dessus`);
+    // Logique pour regarder les cartes du dessus
   };
 
   return (
@@ -144,7 +167,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
                 <Hand
                   key={opponent.username}
                   cards={Array(opponent.hand).fill({
-                    scryfallId: "",
+                    uuid: "",
                     imageUrl: cardBack,
                   })}
                   droppableId={`opponent-hand-${opponent.username}`}
@@ -174,7 +197,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
                   className="battlefield player-battlefield"
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  style={{ flexGrow: 1, position: "relative" }} // Mise à jour du style
+                  style={{ flexGrow: 1, position: "relative" }}
                 >
                   <Zone
                     cards={currentPlayer.battlefield}
@@ -190,6 +213,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
                 <Library
                   title="Bibliothèque Joueur"
                   count={currentPlayer.library}
+                  onLibraryClick={handleLibraryClick}
                 />
                 <div className="player-exil">
                   <Zone
@@ -214,7 +238,15 @@ const GameBoard = ({ gameId, inGameDetails }) => {
             </div>
           </div>
         </div>
-        {selectedCard && <InfosPanel selectedCard={selectedCard} />}
+        <InfosPanel selectedCard={selectedCard} />
+        {libraryMenuVisible && (
+          <LibraryMenu
+            onClose={closeLibraryMenu}
+            onDrawCards={drawCards}
+            onLookAtLibrary={lookAtLibrary}
+            onLookAtTopCards={lookAtTopCards}
+          />
+        )}
       </div>
     </DragDropContext>
   );
