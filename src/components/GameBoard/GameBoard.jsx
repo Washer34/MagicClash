@@ -10,6 +10,9 @@ import InfosPanel from "./InfosPanel/InfosPanel";
 import Library from "./Library/Library";
 import LibraryMenu from "./Library/LibraryMenu/LibraryMenu";
 import LibraryCards from "./Library/LibraryCards/LibraryCards";
+import CardsModal from "./CardsModal/CardsModal";
+import ContextMenu from "./ContextMenu/ContextMenu";
+
 import "./GameBoard.css";
 
 const GameBoard = ({ gameId, inGameDetails }) => {
@@ -21,6 +24,15 @@ const GameBoard = ({ gameId, inGameDetails }) => {
   const [libraryMenuVisible, setLibraryMenuVisible] = useState(false);
   const [libraryCards, setLibraryCards] = useState([]);
   const [libraryModalVisible, setLibraryModalVisible] = useState(false);
+  const [cardModalVisible, setCardModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalCards, setModalCards] = useState([]);
+  const [contextMenu, setContextMenu] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    card: null,
+  });
   const { socket } = useSocket();
 
   useEffect(() => {
@@ -67,6 +79,19 @@ const GameBoard = ({ gameId, inGameDetails }) => {
     };
   }, [inGameDetails, user.username, socket]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (contextMenu.visible && !event.target.closest(".context-menu")) {
+        setContextMenu({ visible: false, x: 0, y: 0, card: null });
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [contextMenu]);
+
   const handleDragEnd = (result) => {
     if (!result.destination) return;
 
@@ -88,6 +113,27 @@ const GameBoard = ({ gameId, inGameDetails }) => {
     }
   };
 
+  const handleRightClick = (e, card) => {
+    e.preventDefault();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      card: card,
+    });
+  };
+
+  const handleContextMenuAction = (action) => {
+    if (action === "toGraveyard") {
+      socket.emit("move to graveyard", {
+        gameId,
+        userId: user.userId,
+        cardId: contextMenu.card.uuid,
+      });
+    }
+    setContextMenu({ visible: false, x: 0, y: 0, card: null });
+  };
+
   const updateCardPosition = (cardUuid, position) => {
     setCurrentPlayer((prevPlayer) => ({
       ...prevPlayer,
@@ -99,7 +145,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
 
   const transformPositionForOpponent = (position) => {
     console.log("transforme: ", position);
-    return { x: position.x, y: position.y };
+    return { x: position.x, y: position.y - 1000 };
   };
 
   if (!currentPlayer) {
@@ -167,6 +213,15 @@ const GameBoard = ({ gameId, inGameDetails }) => {
     });
   };
 
+  const openCardModal = (title, cards) => {
+    setModalTitle(title);
+    setModalCards(cards);
+    setCardModalVisible(true);
+  };
+
+  const closeCardModal = () => {
+    setCardModalVisible(false);
+  };
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -182,16 +237,24 @@ const GameBoard = ({ gameId, inGameDetails }) => {
                   />
                   <div className="opponent-graveyard">
                     <div className="opponent-exil">
-                      <Zone
-                        title="Exil"
-                        cards={opponent.exile}
-                        onCardClick={handleCardClick}
-                      />
-                      <Zone
-                        title="Cimetière"
-                        cards={opponent.graveyard}
-                        onCardClick={handleCardClick}
-                      />
+                      <button
+                        onClick={() =>
+                          openCardModal("Exil Adversaire", opponent.exile)
+                        }
+                      >
+                        Exil
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          openCardModal(
+                            "Cimetière Adversaire",
+                            opponent.graveyard
+                          )
+                        }
+                      >
+                        Cimetière
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -237,6 +300,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
                     onCardClick={handleCardClick}
                     onCardMove={handleCardMove}
                     onCardDoubleClick={handleCardDoubleClick}
+                    onCardRightClick={handleRightClick}
                   />
                   {provided.placeholder}
                 </div>
@@ -250,16 +314,21 @@ const GameBoard = ({ gameId, inGameDetails }) => {
                   onLibraryClick={handleLibraryClick}
                 />
                 <div className="player-exil">
-                  <Zone
-                    title="Exil"
-                    cards={currentPlayer.exile}
-                    onCardClick={handleCardClick}
-                  />
-                  <Zone
-                    title="Cimetière"
-                    cards={currentPlayer.graveyard}
-                    onCardClick={handleCardClick}
-                  />
+                  <button
+                    onClick={() =>
+                      openCardModal("Cimetière Joueur", currentPlayer.graveyard)
+                    }
+                  >
+                    Cimetière
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      openCardModal("Exil Joueur", currentPlayer.exile)
+                    }
+                  >
+                    Exil
+                  </button>
                 </div>
               </div>
               <Hand
@@ -286,6 +355,21 @@ const GameBoard = ({ gameId, inGameDetails }) => {
             cards={libraryCards}
             onClose={closeLibraryModal}
             onCardClick={handleCardClick}
+          />
+        )}
+        {cardModalVisible && (
+          <CardsModal
+            title={modalTitle}
+            cards={modalCards}
+            onClose={closeCardModal}
+            onCardClick={handleCardClick}
+          />
+        )}
+        {contextMenu.visible && (
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            onAction={handleContextMenuAction}
           />
         )}
       </div>

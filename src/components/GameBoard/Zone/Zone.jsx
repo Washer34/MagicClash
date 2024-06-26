@@ -2,7 +2,14 @@ import { Rnd } from "react-rnd";
 import { useState } from "react";
 import "./Zone.css";
 
-const Zone = ({ title, cards, onCardClick, onCardMove, onCardDoubleClick }) => {
+const Zone = ({
+  title,
+  cards,
+  onCardClick,
+  onCardMove,
+  onCardDoubleClick,
+  onCardRightClick,
+}) => {
   const getClassForZone = (title) => {
     switch (title) {
       case "Bibliothèque Joueur":
@@ -20,7 +27,6 @@ const Zone = ({ title, cards, onCardClick, onCardMove, onCardDoubleClick }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   const cardClass = getClassForZone(title);
-
 
   return (
     <div className="zone">
@@ -68,6 +74,7 @@ const Zone = ({ title, cards, onCardClick, onCardMove, onCardDoubleClick }) => {
               className={`card ${cardClass} ${card.tap ? "tapped" : ""}`}
               onClick={() => onCardClick(card)}
               onDoubleClick={() => onCardDoubleClick(card)}
+              onContextMenu={(e) => onCardRightClick(e, card)}
               style={{ width: "100%", height: "100%" }}
               draggable={false}
             />

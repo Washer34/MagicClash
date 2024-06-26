@@ -1,4 +1,4 @@
-.library-modal {
+.cards-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -11,7 +11,7 @@
   z-index: 1001;
 }
 
-.library-modal-content {
+.cards-modal-content {
   position: relative;
   background: rgba(20, 61, 111, 0.546);
   padding: 20px;
@@ -22,13 +22,13 @@
   overflow: auto;
 }
 
-.library-modal .cards-container {
+.cards-modal .cards-container {
   display: flex;
+  flex-wrap: wrap;
   overflow-x: auto;
 }
 
-.library-modal-content 
-.library-card {
+.cards-modal-card {
   width: 15%;
   height: 15%;
   margin: 3px;
