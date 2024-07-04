@@ -1,0 +1,84 @@
+.player-status-card {
+  position: absolute;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 5px;
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0);
+  border-color: transparent;
+  transition: background-color 0.3s ease-out, border-color 0.3s ease-out;
+}
+
+.player-status-card:hover {
+  border-color: rgba(113, 21, 21, 0.8);
+  background-color: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.player-status-card:hover .player-status-username,
+.player-status-card:hover .player-status-healthbar {
+  opacity: 1;
+  max-height: 100px;
+  transform: translateY(0);
+}
+
+.player-status-card:hover .player-status-username {
+  font-size: 18px;
+  color: goldenrod;
+}
+
+.player-status-picture img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.player-status-username,
+.player-status-healthbar {
+  font-size: 0;
+  font-weight: bold;
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out, max-height 0.3s ease-out, font-size 0.5s ease;
+}
+
+.player-status-healthbar {
+  display: flex;
+  align-items: center;
+}
+
+.player-status-minus,
+.player-status-plus {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background-color: #1d262f;
+  color: goldenrod;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.player-status-plus:active {
+  background-color: #34495e;
+  color: rgb(0, 255, 0);
+}
+
+.player-status-minus:active {
+  background-color: #34495e;
+  color: red;
+}
+
+.player-status-life {
+  font-size: 24px;
+  font-weight: bold;
+}

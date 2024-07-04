@@ -5,7 +5,7 @@ const ContextMenu = ({ x, y, onAction }) => {
     <div className="context-menu" style={{ top: y, left: x }}>
       <ul>
         <li onClick={() => onAction("toGraveyard")}>Mettre au cimetière</li>
-        {/* Ajoutez d'autres actions ici */}
+        <li onClick={() => onAction("toExile")}>Exiler</li>
       </ul>
     </div>
   );

@@ -2,17 +2,17 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useSocket } from "../../SocketContext";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
-
-import cardBack from "../../../public/assets/card-back.webp";
+import cardBack from "/assets/card-back.webp";
 import Zone from "./Zone/Zone";
 import Hand from "./Hand/Hand";
 import InfosPanel from "./InfosPanel/InfosPanel";
 import Library from "./Library/Library";
 import LibraryMenu from "./Library/LibraryMenu/LibraryMenu";
 import LibraryCards from "./Library/LibraryCards/LibraryCards";
-import CardsModal from "./CardsModal/CardsModal";
 import ContextMenu from "./ContextMenu/ContextMenu";
-
+import Exile from "./Exile/Exile";
+import Graveyard from "./Graveyard/Graveyard";
+import PlayerStatus from "../PlayerStatus/PlayerStatus";
 import "./GameBoard.css";
 
 const GameBoard = ({ gameId, inGameDetails }) => {
@@ -24,9 +24,8 @@ const GameBoard = ({ gameId, inGameDetails }) => {
   const [libraryMenuVisible, setLibraryMenuVisible] = useState(false);
   const [libraryCards, setLibraryCards] = useState([]);
   const [libraryModalVisible, setLibraryModalVisible] = useState(false);
-  const [cardModalVisible, setCardModalVisible] = useState(false);
-  const [modalTitle, setModalTitle] = useState("");
-  const [modalCards, setModalCards] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState(null);
   const [contextMenu, setContextMenu] = useState({
     visible: false,
     x: 0,
@@ -63,6 +62,35 @@ const GameBoard = ({ gameId, inGameDetails }) => {
       setCurrentPlayer(updatedCurrentPlayer);
       setOpponentPlayers(updatedOpponentPlayers);
       setHand(updatedCurrentPlayer.hand);
+
+      if (modalContent && modalContent.type === "graveyard") {
+        if (modalContent.owner.username === user.username) {
+          setModalContent({
+            ...modalContent,
+            cards: updatedCurrentPlayer.graveyard,
+          });
+        } else {
+          const updatedOpponent = updatedOpponentPlayers.find(
+            (player) => player.username === modalContent.owner.username
+          );
+          setModalContent({
+            ...modalContent,
+            cards: updatedOpponent.graveyard,
+          });
+        }
+      } else if (modalContent && modalContent.type === "exile") {
+        if (modalContent.owner.username === user.username) {
+          setModalContent({
+            ...modalContent,
+            cards: updatedCurrentPlayer.exile,
+          });
+        } else {
+          const updatedOpponent = updatedOpponentPlayers.find(
+            (player) => player.username === modalContent.owner.username
+          );
+          setModalContent({ ...modalContent, cards: updatedOpponent.exile });
+        }
+      }
     });
 
     socket.on("library cards", (cards) => {
@@ -130,6 +158,12 @@ const GameBoard = ({ gameId, inGameDetails }) => {
         userId: user.userId,
         cardId: contextMenu.card.uuid,
       });
+    } else if (action === "toExile") {
+      socket.emit("move to exile", {
+        gameId,
+        userId: user.userId,
+        cardId: contextMenu.card.uuid,
+      });
     }
     setContextMenu({ visible: false, x: 0, y: 0, card: null });
   };
@@ -143,17 +177,12 @@ const GameBoard = ({ gameId, inGameDetails }) => {
     }));
   };
 
-  const transformPositionForOpponent = (position) => {
-    console.log("transforme: ", position);
-    return { x: position.x, y: position.y - 1000 };
-  };
-
-  if (!currentPlayer) {
-    return <div>Chargement...</div>;
-  }
-
   const handleCardClick = (card) => {
     setSelectedCard(card);
+  };
+
+  const transformPositionForOpponent = (position) => {
+    return { x: position.x, y: 100 - position.y };
   };
 
   const handleCardMove = (cardUuid, position) => {
@@ -163,7 +192,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
         gameId,
         userId: user.userId,
         cardId: cardUuid,
-        position,
+        position: position,
       });
     }
   };
@@ -213,15 +242,34 @@ const GameBoard = ({ gameId, inGameDetails }) => {
     });
   };
 
-  const openCardModal = (title, cards) => {
-    setModalTitle(title);
-    setModalCards(cards);
-    setCardModalVisible(true);
+  const openGraveyardModal = (owner) => {
+    const graveyard =
+      owner.username === user.username
+        ? currentPlayer.graveyard
+        : opponentPlayers.find((player) => player.username === owner.username)
+            .graveyard;
+    setModalContent({ type: "graveyard", owner, cards: graveyard });
+    setModalVisible(true);
   };
 
-  const closeCardModal = () => {
-    setCardModalVisible(false);
+  const openExileModal = (owner) => {
+    const exile =
+      owner.username === user.username
+        ? currentPlayer.exile
+        : opponentPlayers.find((player) => player.username === owner.username)
+            .exile;
+    setModalContent({ type: "exile", owner, cards: exile });
+    setModalVisible(true);
   };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setModalContent(null);
+  };
+
+  if (!currentPlayer) {
+    return <div>Chargement...</div>;
+  }
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -230,55 +278,43 @@ const GameBoard = ({ gameId, inGameDetails }) => {
           <div className="opponent-zone">
             <div className="opponent-library">
               {opponentPlayers.map((opponent) => (
-                <div key={opponent.username} className="opponent-player">
-                  <Library
-                    title="Bibliothèque Adversaire"
-                    count={opponent.library}
-                  />
-                  <div className="opponent-graveyard">
-                    <div className="opponent-exil">
-                      <button
-                        onClick={() =>
-                          openCardModal("Exil Adversaire", opponent.exile)
-                        }
-                      >
-                        Exil
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          openCardModal(
-                            "Cimetière Adversaire",
-                            opponent.graveyard
-                          )
-                        }
-                      >
-                        Cimetière
-                      </button>
-                    </div>
+                <div key={opponent.username} className="opponent-graveyard">
+                  <Library count={opponent.library} />
+                  <div className="opponent-exil">
+                    <button onClick={() => openExileModal(opponent)}>
+                      Exil
+                    </button>
+                    <button onClick={() => openGraveyardModal(opponent)}>
+                      Cimetière
+                    </button>
                   </div>
                 </div>
               ))}
               {opponentPlayers.map((opponent) => (
-                <Hand
-                  key={opponent.username}
-                  cards={Array(opponent.hand).fill({
-                    uuid: "",
-                    imageUrl: cardBack,
-                  })}
-                  droppableId={`opponent-hand-${opponent.username}`}
-                  isOpponent={true}
-                  onCardClick={handleCardClick}
-                />
+                <>
+                  <Hand
+                    key={opponent.username}
+                    cards={Array(opponent.hand).fill({
+                      uuid: "",
+                      imageUrl: cardBack,
+                    })}
+                    droppableId={`opponent-hand-${opponent.username}`}
+                    isOpponent={true}
+                    onCardClick={handleCardClick}
+                  />
+                  <PlayerStatus player={opponent} gameId={gameId} />
+                </>
               ))}
             </div>
             <div className="battlefield opponent-battlefield">
               {opponentPlayers.map((opponent) => (
                 <Zone
+                  title={"Opponent-Battlefield"}
                   key={opponent.username}
                   cards={opponent.battlefield.map((card) => ({
                     ...card,
                     position: transformPositionForOpponent(card.position),
+                    tap: card.tap,
                   }))}
                   onCardClick={handleCardClick}
                   onCardMove={null}
@@ -296,6 +332,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
                   style={{ flexGrow: 1, position: "relative" }}
                 >
                   <Zone
+                    title={"Player-Battlefield"}
                     cards={currentPlayer.battlefield}
                     onCardClick={handleCardClick}
                     onCardMove={handleCardMove}
@@ -309,24 +346,14 @@ const GameBoard = ({ gameId, inGameDetails }) => {
             <div className="player-library">
               <div className="player-graveyard">
                 <Library
-                  title="Bibliothèque Joueur"
                   count={currentPlayer.library}
                   onLibraryClick={handleLibraryClick}
                 />
                 <div className="player-exil">
-                  <button
-                    onClick={() =>
-                      openCardModal("Cimetière Joueur", currentPlayer.graveyard)
-                    }
-                  >
+                  <button onClick={() => openGraveyardModal(currentPlayer)}>
                     Cimetière
                   </button>
-
-                  <button
-                    onClick={() =>
-                      openCardModal("Exil Joueur", currentPlayer.exile)
-                    }
-                  >
+                  <button onClick={() => openExileModal(currentPlayer)}>
                     Exil
                   </button>
                 </div>
@@ -337,7 +364,9 @@ const GameBoard = ({ gameId, inGameDetails }) => {
                 isOpponent={false}
                 onCardClick={handleCardClick}
                 onDragEnd={handleDragEnd}
+                onCardRightClick={handleRightClick}
               />
+              <PlayerStatus player={currentPlayer} gameId={gameId} />
             </div>
           </div>
         </div>
@@ -357,12 +386,20 @@ const GameBoard = ({ gameId, inGameDetails }) => {
             onCardClick={handleCardClick}
           />
         )}
-        {cardModalVisible && (
-          <CardsModal
-            title={modalTitle}
-            cards={modalCards}
-            onClose={closeCardModal}
+        {modalVisible && modalContent && modalContent.type === "graveyard" && (
+          <Graveyard
+            cards={modalContent.cards}
+            onClose={closeModal}
             onCardClick={handleCardClick}
+            onCardRightClick={handleRightClick}
+          />
+        )}
+        {modalVisible && modalContent && modalContent.type === "exile" && (
+          <Exile
+            cards={modalContent.cards}
+            onClose={closeModal}
+            onCardClick={handleCardClick}
+            onCardRightClick={handleRightClick}
           />
         )}
         {contextMenu.visible && (

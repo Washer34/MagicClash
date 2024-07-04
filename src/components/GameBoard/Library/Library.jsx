@@ -1,5 +1,5 @@
 import "./Library.css";
-import cardBack from "../../../../public/assets/card-back.webp";
+import cardBack from "/assets/card-back.webp";
 
 const Library = ({ count, onLibraryClick }) => (
   <div className="library">
@@ -10,7 +10,7 @@ const Library = ({ count, onLibraryClick }) => (
           onLibraryClick();
         }}
       >
-        <img src={cardBack} alt="Library" className="card" />
+        <img src={cardBack} alt="Library" />
         <span className="card-count">{count}</span>
       </div>
     </div>

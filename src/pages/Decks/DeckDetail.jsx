@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import "./Decks.css";
-import noImage from "../../../public/assets/no-image.png";
+import noImage from "/assets/no-image.png?url";
 
 const DeckDetail = () => {
   const user = useSelector((state) => state.user);

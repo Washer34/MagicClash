@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import CardDetails from '../../components/CardDetails/CardDetails';
 import './Cards.css'
-import noImage from '../../../public/assets/no-image.png'
+import noImage from "/assets/no-image.png?url";
 
 const Cards = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,7 +33,7 @@ const Cards = () => {
 
 
   return (
-    <div className='card-container'>
+    <div className='search-card-container'>
       <form onSubmit={handleSearch}>
         <input
           type="text"

@@ -3,7 +3,6 @@
   display: flex;
   width: 100%;
   justify-content: center;
-  margin: 10px 0;
 }
 
 .card-container {
@@ -21,4 +20,8 @@
 
 .player-hand {
   align-items: flex-end;
+}
+
+.opponent-hand {
+  align-items: flex-start;
 }

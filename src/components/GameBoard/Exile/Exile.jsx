@@ -1,22 +1,16 @@
-import "./CardsModal.css";
+import "./Exile.css";
 
-const CardsModal = ({
-  title,
-  cards,
-  onClose,
-  onCardClick,
-  onCardRightClick,
-}) => {
+const Exile = ({ cards, onCardClick, onCardRightClick, onClose }) => {
   const handleBackgroundClick = (e) => {
-    if (e.target.className === "cards-modal") {
+    if (e.target.className === "exile-modal") {
       onClose();
     }
   };
 
   return (
-    <div className="cards-modal" onClick={handleBackgroundClick}>
-      <div className="cards-modal-content">
-        <h2>{title}</h2>
+    <div className="exile-modal" onClick={handleBackgroundClick}>
+      <div className="exile-modal-content">
+        <h2>Exil</h2>
         <div className="cards-container">
           {cards.map((card, index) => (
             <img
@@ -34,4 +28,4 @@ const CardsModal = ({
   );
 };
 
-export default CardsModal;
+export default Exile;

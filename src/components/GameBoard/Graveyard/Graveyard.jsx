@@ -1,22 +1,16 @@
-import "./CardsModal.css";
+import "./Graveyard.css";
 
-const CardsModal = ({
-  title,
-  cards,
-  onClose,
-  onCardClick,
-  onCardRightClick,
-}) => {
+const Graveyard = ({ cards, onCardClick, onCardRightClick, onClose }) => {
   const handleBackgroundClick = (e) => {
-    if (e.target.className === "cards-modal") {
+    if (e.target.className === "graveyard-modal") {
       onClose();
     }
   };
 
   return (
-    <div className="cards-modal" onClick={handleBackgroundClick}>
-      <div className="cards-modal-content">
-        <h2>{title}</h2>
+    <div className="graveyard-modal" onClick={handleBackgroundClick}>
+      <div className="graveyard-modal-content">
+        <h2>Cimetière</h2>
         <div className="cards-container">
           {cards.map((card, index) => (
             <img
@@ -34,4 +28,4 @@ const CardsModal = ({
   );
 };
 
-export default CardsModal;
+export default Graveyard;

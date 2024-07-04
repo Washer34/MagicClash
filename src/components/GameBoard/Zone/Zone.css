@@ -10,12 +10,10 @@
 }
 
 .zone img {
-  margin: 5px;
   width: 60px;
   height: 80px;
 }
 
-.library-card img,
 .exile-card img,
 .graveyard-card img {
   width: 60px;

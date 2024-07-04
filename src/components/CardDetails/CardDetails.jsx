@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import './CardDetails.css';
-import noImage from '../../../public/assets/no-image.png'
+import noImage from "/assets/no-image.png?url";
 
 const CardDetails = ({ card, onClose }) => {
   const handleOutsideClick = (e) => {
