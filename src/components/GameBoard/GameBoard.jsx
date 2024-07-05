@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useSocket } from "../../SocketContext";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
@@ -34,59 +34,64 @@ const GameBoard = ({ gameId, inGameDetails }) => {
   });
   const { socket } = useSocket();
 
-  useEffect(() => {
-    if (!inGameDetails) return;
+useEffect(() => {
+  if (!inGameDetails) return;
 
-    const currentPlayer = inGameDetails.players.find(
+  const currentPlayer = inGameDetails.players.find(
+    (player) => player.username === user.username
+  );
+  const opponentPlayers = inGameDetails.players.filter(
+    (player) => player.username !== user.username
+  );
+
+  setCurrentPlayer(currentPlayer);
+  setOpponentPlayers(opponentPlayers);
+  setHand(currentPlayer.hand);
+
+  document.querySelector(".app-container").classList.add("game-board-active");
+
+  const handleIngameUpdate = (updatedGame) => {
+    const updatedCurrentPlayer = updatedGame.players.find(
       (player) => player.username === user.username
     );
-    const opponentPlayers = inGameDetails.players.filter(
+    const updatedOpponentPlayers = updatedGame.players.filter(
       (player) => player.username !== user.username
     );
 
-    setCurrentPlayer(currentPlayer);
-    setOpponentPlayers(opponentPlayers);
-    setHand(currentPlayer.hand);
-
-    document.querySelector(".app-container").classList.add("game-board-active");
-
-    const handleIngameUpdate = (updatedGame) => {
-      console.log("In-game update received: ", updatedGame);
-      const updatedCurrentPlayer = updatedGame.players.find(
-        (player) => player.username === user.username
-      );
-      const updatedOpponentPlayers = updatedGame.players.filter(
-        (player) => player.username !== user.username
-      );
-
-      setCurrentPlayer(updatedCurrentPlayer);
-      setOpponentPlayers(updatedOpponentPlayers);
+    setCurrentPlayer(updatedCurrentPlayer);
+    setOpponentPlayers(updatedOpponentPlayers);
       setHand(updatedCurrentPlayer.hand);
 
-      if (modalContent) {
-        updateModalContent(
-          modalContent,
-          updatedCurrentPlayer,
-          updatedOpponentPlayers
-        );
-      }
-    };
+    if (modalContent) {
+      updateModalContent(
+        modalContent,
+        updatedCurrentPlayer,
+        updatedOpponentPlayers
+      );
+    }
+  };
 
-    socket.on("ingame update", handleIngameUpdate);
+  socket.on("ingame update", handleIngameUpdate);
 
+  return () => {
+    document
+      .querySelector(".app-container")
+      .classList.remove("game-board-active");
+    socket.off("ingame update", handleIngameUpdate);
+    socket.off("library cards");
+  };
+}, [inGameDetails, user.username, socket, modalContent]);
+
+  useEffect(() => {
     socket.on("library cards", (cards) => {
       setLibraryCards(cards);
       setLibraryModalVisible(true);
     });
 
     return () => {
-      document
-        .querySelector(".app-container")
-        .classList.remove("game-board-active");
-      socket.off("ingame update", handleIngameUpdate);
       socket.off("library cards");
     };
-  }, [inGameDetails, user.username, socket]);
+  }, [socket, libraryModalVisible]);
 
   useEffect(() => {
     if (modalContent) {
@@ -196,17 +201,27 @@ const GameBoard = ({ gameId, inGameDetails }) => {
   };
 
   const handleContextMenuAction = (action) => {
-    if (action === "toGraveyard") {
-      socket.emit("move to graveyard", {
+    const cardUuid = contextMenu.card.uuid;
+    if (
+      action === "toGraveyard" ||
+      action === "toExile" ||
+      action === "toHand"
+    ) {
+      setLibraryCards((prevCards) =>
+        prevCards.filter((card) => card.uuid !== cardUuid)
+      );
+
+      const socketEvent =
+        action === "toGraveyard"
+          ? "move to graveyard"
+          : action === "toExile"
+          ? "move to exile"
+          : "move to hand";
+
+      socket.emit(socketEvent, {
         gameId,
         userId: user.userId,
-        cardId: contextMenu.card.uuid,
-      });
-    } else if (action === "toExile") {
-      socket.emit("move to exile", {
-        gameId,
-        userId: user.userId,
-        cardId: contextMenu.card.uuid,
+        cardId: cardUuid,
       });
     }
     setContextMenu({ visible: false, x: 0, y: 0, card: null });
@@ -250,7 +265,6 @@ const GameBoard = ({ gameId, inGameDetails }) => {
   };
 
   const drawCards = (number) => {
-    console.log(`Piocher ${number} cartes`);
     socket.emit("draw x cards", { gameId, userId: user.userId, number });
   };
 
@@ -260,6 +274,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
       userId: user.userId,
       number: null,
     });
+    setLibraryModalVisible(true);
   };
 
   const lookAtTopCards = (number) => {
@@ -428,6 +443,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
             cards={libraryCards}
             onClose={closeLibraryModal}
             onCardClick={handleCardClick}
+            onCardRightClick={handleRightClick}
           />
         )}
         {modalVisible && modalContent && modalContent.type === "graveyard" && (

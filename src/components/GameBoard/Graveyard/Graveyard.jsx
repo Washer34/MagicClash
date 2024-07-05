@@ -5,7 +5,6 @@ const Graveyard = ({ cards, onCardClick, onCardRightClick, onClose }) => {
   const [displayedCards, setDisplayedCards] = useState(cards);
 
   useEffect(() => {
-    console.log("Graveyard cards updated: ", cards);
     setDisplayedCards(cards);
   }, [cards]);
 

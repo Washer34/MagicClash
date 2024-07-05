@@ -8,15 +8,17 @@
   padding-top: 5px;
   border-radius: 10px;
   background-color: rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0);
-  border-color: transparent;
+  border: 1px solid transparent;
   transition: background-color 0.3s ease-out, border-color 0.3s ease-out;
+  overflow: hidden;
+  height: 100px;
 }
 
 .player-status-card:hover {
   border-color: rgba(113, 21, 21, 0.8);
   background-color: rgba(0, 0, 0, 0.3);
   cursor: pointer;
+  height: auto;
 }
 
 .player-status-card:hover .player-status-username,
@@ -24,11 +26,7 @@
   opacity: 1;
   max-height: 100px;
   transform: translateY(0);
-}
-
-.player-status-card:hover .player-status-username {
   font-size: 18px;
-  color: goldenrod;
 }
 
 .player-status-picture img {
@@ -46,6 +44,11 @@
   max-height: 0;
   transform: translateY(-10px);
   transition: opacity 0.3s ease-out, transform 0.3s ease-out, max-height 0.3s ease-out, font-size 0.5s ease;
+}
+
+.player-status-username {
+  color: goldenrod;
+  transition: font-size 0.5s ease, opacity 0.3s ease-out, transform 0.3s ease-out, max-height 0.3s ease-out;
 }
 
 .player-status-healthbar {

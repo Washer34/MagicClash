@@ -6,6 +6,7 @@ const ContextMenu = ({ x, y, onAction }) => {
       <ul>
         <li onClick={() => onAction("toGraveyard")}>Mettre au cimetière</li>
         <li onClick={() => onAction("toExile")}>Exiler</li>
+        <li onClick={() => onAction("toHand")}>Renvoyer en main</li>
       </ul>
     </div>
   );

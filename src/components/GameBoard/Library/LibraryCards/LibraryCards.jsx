@@ -1,6 +1,13 @@
-import './LibraryCards.css'
+import { useState, useEffect } from "react";
+import "./LibraryCards.css";
 
-const LibraryCards = ({ cards, onClose, onCardClick }) => {
+const LibraryCards = ({ cards, onClose, onCardClick, onCardRightClick }) => {
+  const [displayedCards, setDisplayedCards] = useState(cards);
+
+  useEffect(() => {
+    setDisplayedCards(cards);
+  }, [cards]);
+
   const handleBackgroundClick = (e) => {
     if (e.target.className === "library-modal") {
       onClose();
@@ -11,13 +18,14 @@ const LibraryCards = ({ cards, onClose, onCardClick }) => {
     <div className="library-modal" onClick={handleBackgroundClick}>
       <div className="library-modal-content">
         <div className="cards-container">
-          {cards.map((card, index) => (
+          {displayedCards.map((card, index) => (
             <img
               key={index}
               src={card.imageUrl}
               alt={card.name}
               className="library-card"
               onClick={() => onCardClick(card)}
+              onContextMenu={(e) => onCardRightClick(e, card)}
             />
           ))}
         </div>
@@ -26,4 +34,4 @@ const LibraryCards = ({ cards, onClose, onCardClick }) => {
   );
 };
 
-export default LibraryCards
+export default LibraryCards;

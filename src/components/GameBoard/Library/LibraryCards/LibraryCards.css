@@ -13,7 +13,9 @@
 
 .library-modal-content {
   position: relative;
-  background: rgba(20, 61, 111, 0.546);
+  background: rgba(0, 0, 0, 0.546);
+  border: 1px solid goldenrod;
+  box-shadow: 0 0 5px rgba(218, 165, 32, 0.5);
   padding: 20px;
   border-radius: 10px;
   width: 80%;
@@ -24,6 +26,7 @@
 
 .library-modal .cards-container {
   display: flex;
+  flex-wrap: wrap;
   overflow-x: auto;
 }
 

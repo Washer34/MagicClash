@@ -3,7 +3,13 @@ import { useState } from "react";
 import "./Hand.css";
 import cardBack from "/assets/card-back.webp";
 
-const Hand = ({ cards, droppableId, isOpponent, onCardClick, onCardRightClick }) => {
+const Hand = ({
+  cards,
+  droppableId,
+  isOpponent,
+  onCardClick,
+  onCardRightClick,
+}) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   const calculateCardStyle = (index, totalCards, isOpponent) => {
