@@ -1,6 +1,14 @@
+import { useEffect, useState } from "react";
 import "./Graveyard.css";
 
 const Graveyard = ({ cards, onCardClick, onCardRightClick, onClose }) => {
+  const [displayedCards, setDisplayedCards] = useState(cards);
+
+  useEffect(() => {
+    console.log("Graveyard cards updated: ", cards);
+    setDisplayedCards(cards);
+  }, [cards]);
+
   const handleBackgroundClick = (e) => {
     if (e.target.className === "graveyard-modal") {
       onClose();
@@ -12,7 +20,7 @@ const Graveyard = ({ cards, onCardClick, onCardRightClick, onClose }) => {
       <div className="graveyard-modal-content">
         <h2>Cimetière</h2>
         <div className="cards-container">
-          {cards.map((card, index) => (
+          {displayedCards.map((card, index) => (
             <img
               key={index}
               src={card.imageUrl}

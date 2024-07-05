@@ -50,8 +50,8 @@ const GameBoard = ({ gameId, inGameDetails }) => {
 
     document.querySelector(".app-container").classList.add("game-board-active");
 
-    socket.on("ingame update", (updatedGame) => {
-      console.log("in game update received : ", updatedGame);
+    const handleIngameUpdate = (updatedGame) => {
+      console.log("In-game update received: ", updatedGame);
       const updatedCurrentPlayer = updatedGame.players.find(
         (player) => player.username === user.username
       );
@@ -63,35 +63,16 @@ const GameBoard = ({ gameId, inGameDetails }) => {
       setOpponentPlayers(updatedOpponentPlayers);
       setHand(updatedCurrentPlayer.hand);
 
-      if (modalContent && modalContent.type === "graveyard") {
-        if (modalContent.owner.username === user.username) {
-          setModalContent({
-            ...modalContent,
-            cards: updatedCurrentPlayer.graveyard,
-          });
-        } else {
-          const updatedOpponent = updatedOpponentPlayers.find(
-            (player) => player.username === modalContent.owner.username
-          );
-          setModalContent({
-            ...modalContent,
-            cards: updatedOpponent.graveyard,
-          });
-        }
-      } else if (modalContent && modalContent.type === "exile") {
-        if (modalContent.owner.username === user.username) {
-          setModalContent({
-            ...modalContent,
-            cards: updatedCurrentPlayer.exile,
-          });
-        } else {
-          const updatedOpponent = updatedOpponentPlayers.find(
-            (player) => player.username === modalContent.owner.username
-          );
-          setModalContent({ ...modalContent, cards: updatedOpponent.exile });
-        }
+      if (modalContent) {
+        updateModalContent(
+          modalContent,
+          updatedCurrentPlayer,
+          updatedOpponentPlayers
+        );
       }
-    });
+    };
+
+    socket.on("ingame update", handleIngameUpdate);
 
     socket.on("library cards", (cards) => {
       setLibraryCards(cards);
@@ -102,10 +83,73 @@ const GameBoard = ({ gameId, inGameDetails }) => {
       document
         .querySelector(".app-container")
         .classList.remove("game-board-active");
-      socket.off("ingame update");
+      socket.off("ingame update", handleIngameUpdate);
       socket.off("library cards");
     };
   }, [inGameDetails, user.username, socket]);
+
+  useEffect(() => {
+    if (modalContent) {
+      const handleModalUpdate = (updatedGame) => {
+        const updatedCurrentPlayer = updatedGame.players.find(
+          (player) => player.username === user.username
+        );
+        const updatedOpponentPlayers = updatedGame.players.filter(
+          (player) => player.username !== user.username
+        );
+
+        updateModalContent(
+          modalContent,
+          updatedCurrentPlayer,
+          updatedOpponentPlayers
+        );
+      };
+
+      socket.on("ingame update", handleModalUpdate);
+
+      return () => {
+        socket.off("ingame update", handleModalUpdate);
+      };
+    }
+  }, [modalContent, socket]);
+
+  const updateModalContent = (
+    modalContent,
+    updatedCurrentPlayer,
+    updatedOpponentPlayers
+  ) => {
+    if (modalContent.type === "graveyard") {
+      if (modalContent.owner.username === user.username) {
+        setModalContent((prevContent) => ({
+          ...prevContent,
+          cards: updatedCurrentPlayer.graveyard,
+        }));
+      } else {
+        const updatedOpponent = updatedOpponentPlayers.find(
+          (player) => player.username === modalContent.owner.username
+        );
+        setModalContent((prevContent) => ({
+          ...prevContent,
+          cards: updatedOpponent.graveyard,
+        }));
+      }
+    } else if (modalContent.type === "exile") {
+      if (modalContent.owner.username === user.username) {
+        setModalContent((prevContent) => ({
+          ...prevContent,
+          cards: updatedCurrentPlayer.exile,
+        }));
+      } else {
+        const updatedOpponent = updatedOpponentPlayers.find(
+          (player) => player.username === modalContent.owner.username
+        );
+        setModalContent((prevContent) => ({
+          ...prevContent,
+          cards: updatedOpponent.exile,
+        }));
+      }
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -370,7 +414,7 @@ const GameBoard = ({ gameId, inGameDetails }) => {
             </div>
           </div>
         </div>
-        <InfosPanel selectedCard={selectedCard} />
+        <InfosPanel selectedCard={selectedCard} gameId={gameId} />
         {libraryMenuVisible && (
           <LibraryMenu
             onClose={closeLibraryMenu}

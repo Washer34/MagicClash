@@ -1,11 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 import { useSocket } from "../../../SocketContext";
+import { SendHorizontal } from "lucide-react";
 import "./InfosPanel.css";
 
-const InfosPanel = ({ selectedCard, gameId, username }) => {
+const InfosPanel = ({ selectedCard, gameId }) => {
+  const user = useSelector((state) => state.user);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const { socket } = useSocket();
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     if (!socket) return;
@@ -21,9 +25,26 @@ const InfosPanel = ({ selectedCard, gameId, username }) => {
     };
   }, [socket]);
 
-  const sendMessage = () => {
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).match(/[a-z]/i)
+      ? string.charAt(0).toUpperCase() + string.slice(1)
+      : string;
+  };
+
+  const sendMessage = (e) => {
+    e.preventDefault();
     if (newMessage.trim()) {
-      const message = `${username}: ${newMessage}`;
+      const capitalizedUsername = capitalizeFirstLetter(user.username);
+      const message = {
+        username: capitalizedUsername,
+        text: newMessage,
+      };
       socket.emit("chat message", { gameId, message });
       setNewMessage("");
     }
@@ -40,18 +61,35 @@ const InfosPanel = ({ selectedCard, gameId, username }) => {
       <div className="log">
         <h3>Logs de la partie</h3>
         <div className="messages">
-          {messages.map((msg, index) => (
-            <p key={index}>{msg}</p>
-          ))}
+          {messages.map((msg, index) => {
+            const { username, text } = msg;
+            const isUserMessage =
+              username === capitalizeFirstLetter(user.username);
+            return (
+              <p key={index} className="message">
+                <span
+                  className={
+                    isUserMessage ? "user-username" : "opponent-username"
+                  }
+                >
+                  {username}
+                </span>
+                : {text}
+              </p>
+            );
+          })}
+          <div ref={messagesEndRef} />
         </div>
-        <div className="chat-input">
+        <form className="chat-input" onSubmit={sendMessage}>
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
           />
-          <button onClick={sendMessage}>Send</button>
-        </div>
+          <button type="submit">
+            <SendHorizontal size={20} />
+          </button>
+        </form>
       </div>
     </div>
   );

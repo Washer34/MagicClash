@@ -16,3 +16,23 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+input {
+  border-radius: 5px;
+  padding: 5px;
+  margin: 5px;
+  background-color: #1e1e1ec4;
+  border: 1px solid transparent;
+  color: white;
+}
+
+input:focus {
+  outline: none;
+  border: 1px solid goldenrod;
+  box-shadow: 0 0 5px rgba(218, 165, 32, 0.5);
+}
+
+input::placeholder {
+  color: #d7d7d7;
+  opacity: 1;
+}
