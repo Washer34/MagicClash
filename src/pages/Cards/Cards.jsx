@@ -1,25 +1,29 @@
-import { useState } from 'react'
+import { useState } from "react";
 
-import CardDetails from '../../components/CardDetails/CardDetails';
-import './Cards.css'
+import CardDetails from "../../components/CardDetails/CardDetails";
+import "./Cards.css";
 import noImage from "/assets/no-image.png?url";
 
 const Cards = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [cards, setCards] = useState([]);
   const [totalCards, setTotalCards] = useState(0);
   const [selectedCard, setSelectedCard] = useState(null);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchTerm)}`)
-      .then(response => response.json())
-      .then(data => {
-        setTotalCards(data.total_cards)
+    fetch(
+      `https://api.scryfall.com/cards/search?q=${encodeURIComponent(
+        searchTerm
+      )}`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        setTotalCards(data.total_cards);
         setCards(data.data);
       })
-      .catch(error => {
-        console.error('Erreur lors de la recherche:', error);
+      .catch((error) => {
+        console.error("Erreur lors de la recherche:", error);
       });
   };
 
@@ -31,9 +35,8 @@ const Cards = () => {
     setSelectedCard(null);
   };
 
-
   return (
-    <div className='search-card-container'>
+    <div className="search-card-container">
       <form onSubmit={handleSearch}>
         <input
           type="text"
@@ -47,11 +50,18 @@ const Cards = () => {
         <p>{totalCards} résultats correspondent à la recherche.</p>
       )}
       <div className="cards-grid">
-        {cards.map(card => (
-          <div className="list-card" key={card.id} onClick={() => handleCardClick(card)}>
+        {cards.map((card) => (
+          <div
+            className="list-card"
+            key={card.id}
+            onClick={() => handleCardClick(card)}
+          >
             <h3>{card.name}</h3>
             {card.card_faces && card.card_faces[0].image_uris ? (
-              <img src={card.card_faces[0].image_uris.png} alt={card.card_faces[0].name} />
+              <img
+                src={card.card_faces[0].image_uris.png}
+                alt={card.card_faces[0].name}
+              />
             ) : card.image_uris && card.image_uris.png ? (
               <img src={card.image_uris.png} alt={card.name} />
             ) : (
@@ -65,5 +75,5 @@ const Cards = () => {
       )}
     </div>
   );
-}
-export default Cards
+};
+export default Cards;

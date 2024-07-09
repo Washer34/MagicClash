@@ -67,14 +67,14 @@ const CardDetails = ({ card, onClose }) => {
               <img src={card.card_faces[0].image_uris.png} alt={card.card_faces[0].name} />
               <div className='card-detail ml-4'>
                 <h3 className='modal-title py-4'>{card.card_faces[0].name} {renderManaCost(card.card_faces[0].mana_cost)}</h3>
-                <p className='card-description'>{renderOracleText(card.card_faces[0].oracle_text)}</p>
+                <div className='card-description'>{renderOracleText(card.card_faces[0].oracle_text)}</div>
               </div>
             </div>
             <div className='second-card'>
               <img src={card.card_faces[1].image_uris.png} alt={card.card_faces[1].name} />
               <div className='card-detail ml-4'>
                 <h3 className='modal-title py-4'>{card.card_faces[1].name} {renderManaCost(card.card_faces[1].mana_cost)}</h3>
-                <p className='card-description'>{renderOracleText(card.card_faces[1].oracle_text)}</p>
+                <div className='card-description'>{renderOracleText(card.card_faces[1].oracle_text)}</div>
               </div>
             </div>
           </div>
@@ -83,7 +83,7 @@ const CardDetails = ({ card, onClose }) => {
             <img src={card.image_uris.png} alt={card.name} />
             <div className='card-detail ml-4'>
               <h3 className='modal-title py-4'>{card.name} {renderManaCost(card.mana_cost)}</h3>
-              <p className='card-description'>{renderOracleText(card.oracle_text)}</p>
+              <div className='card-description'>{renderOracleText(card.oracle_text)}</div>
             </div>
           </>
         ) : (
@@ -91,7 +91,7 @@ const CardDetails = ({ card, onClose }) => {
             <img src={noImage} alt="Image indisponible" />
             <div className='card-detail ml-4'>
               <h3 className='modal-title py-4'>{card.name} {renderManaCost(card.mana_cost)}</h3>
-              <p className='card-description'>{renderOracleText(card.oracle_text)}</p>
+              <div className='card-description'>{renderOracleText(card.oracle_text)}</div>
             </div>
           </>
         )}

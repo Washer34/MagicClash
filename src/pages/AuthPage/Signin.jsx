@@ -1,14 +1,18 @@
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setUser } from "../../store/slices/userSlice";
+import MagicLoader from "../../components/MagicLoader/MagicLoader";
 import "./Form.css";
 
 const Signin = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleSigninSubmit = async (event) => {
     event.preventDefault();
+    setIsLoading(true);
     const formData = new FormData(event.target);
     const userData = Object.fromEntries(formData.entries());
 
@@ -49,6 +53,8 @@ const Signin = () => {
       navigate("/");
     } catch (error) {
       console.error("Erreur de connection:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -61,11 +67,18 @@ const Signin = () => {
             <input type="password" placeholder="Mot de passe" name="password" />
           </div>
           <div className="form-row">
-            <button type="submit">Se connecter</button>
+            <button
+              type="submit"
+              className={`submit-button ${isLoading ? "loading" : ""}`}
+              disabled={isLoading}
+            >
+              {isLoading ? <MagicLoader /> : "Se connecter"}
+            </button>
           </div>
         </form>
       </div>
     </div>
   );
 };
+
 export default Signin;

@@ -1,0 +1,5 @@
+.custom-dot {
+  @apply bg-goldenrod h-4 w-4 rounded-full;
+  box-shadow: 0 0 5px rgba(218, 165, 32, 1);
+  border: 1px solid #DAA520;
+}

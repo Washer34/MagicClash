@@ -9,6 +9,14 @@
   padding: 20px;
   border-radius: 10px;
   width: 300px;
+  border: 1px solid transparent;
+  transition: background-color 0.5s ease, border 1s ease, box-shadow 0.5s ease;
+}
+
+.form-card:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(218, 165, 32, 0.568);
+  box-shadow: 0 0 5px rgba(218, 165, 32, 0.5);
 }
 
 .form-row {
@@ -24,14 +32,22 @@
 }
 
 .form-row button {
-  background-color: #4CAF50; /* Couleur verte */
+  background-color: #daa520;
+  border: 1px solid transparent;
   color: white;
   padding: 10px 20px;
-  border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease-out, border-color 0.3s ease-out,
+    box-shadow 0.3s ease-out, color 0.3s ease-out, text-shadow 0.3s ease-out;
 }
 
-.form-row button:hover {
-  background-color: #45a049;
+.form-row button:hover,
+.form-row button.loading {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-color: goldenrod;
+  box-shadow: 0 0 5px rgba(218, 165, 32, 0.5);
+  color: goldenrod;
+  text-shadow: 0 0 5px rgba(218, 165, 32, 0.5);
 }

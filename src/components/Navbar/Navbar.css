@@ -2,3 +2,9 @@
   width: 100%;
   background-color: rgba(0,0,0,0.2);
 }
+
+.navbar .nav-active,
+.navbar a:hover {
+  text-shadow: 0 0 5px rgba(218, 165, 32, 1);
+  color: goldenrod;
+}

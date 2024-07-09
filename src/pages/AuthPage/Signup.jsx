@@ -1,31 +1,39 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
+import MagicLoader from '../../components/MagicLoader/MagicLoader';
 import './Form.css';
 
 const Signup = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSignupSubmit = async (event) => {
     event.preventDefault();
+    setIsLoading(true);
     const formData = new FormData(event.target);
     const userData = Object.fromEntries(formData.entries());
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userData),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'inscription');
+        throw new Error("Erreur lors de l'inscription");
       }
-      navigate('/signin');
-
+      navigate("/signin");
     } catch (error) {
-      console.error('Erreur d\'inscription:', error);
+      console.error("Erreur d'inscription:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -41,11 +49,17 @@ const Signup = () => {
             <input type="password" placeholder="Mot de passe" name="password" />
           </div>
           <div className="form-row">
-            <button type="submit">S&apos;inscrire</button>
+            <button
+              type="submit"
+              className={`submit-button ${isLoading ? "loading" : ""}`}
+              disabled={isLoading}
+            >
+              {isLoading ? <MagicLoader /> : "S'inscrire"}
+            </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }
 export default Signup
