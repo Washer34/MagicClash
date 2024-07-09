@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { Camera } from "lucide-react"; 
 
 import "./Decks.css";
 import noImage from "/assets/no-image.png?url";
@@ -14,6 +15,11 @@ const DeckDetail = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [file, setFile] = useState(null);
   const [modifiedCards, setModifiedCards] = useState(new Map());
+  const [hoveredCard, setHoveredCard] = useState({
+    imageUrl: null,
+    top: 0,
+    left: 0,
+  });
 
   useEffect(() => {
     const fetchDeckDetail = async () => {
@@ -123,8 +129,6 @@ const DeckDetail = () => {
     }
   };
 
-
-
   const addCardToDeck = (card) => {
     const existingCardIndex = deckCards.findIndex(
       (c) => c.scryfallId === card.id
@@ -209,7 +213,7 @@ const DeckDetail = () => {
 
   const addCardToSelected = (card) => {
     setDeck((deck) => {
-      return { ...deck, cards: [...deck.cards, card] }; // Ajoute une nouvelle instance de la carte
+      return { ...deck, cards: [...deck.cards, card] };
     });
   };
 
@@ -241,47 +245,102 @@ const DeckDetail = () => {
     return Array.from(groupedCards.values());
   };
 
+  const handleMouseEnter = (card, event) => {
+    const rect = event.target.getBoundingClientRect();
+    setHoveredCard({
+      imageUrl: card.imageUrl,
+      top: rect.top + window.scrollY,
+      left: rect.left + window.scrollX + rect.width,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredCard({ imageUrl: null, top: 0, left: 0 });
+  };
+
+  const renderCardTable = (
+    cards,
+    handleDecrease,
+    handleIncrease,
+    showQuantity = true
+  ) => (
+    <table className="deck-detailed-table">
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>Nom</th>
+          {showQuantity && <th>Quantité</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {cards.map((card, index) => (
+          <tr key={`${card.scryfallId}_${index}`}>
+            <td
+              onMouseEnter={(e) => handleMouseEnter(card, e)}
+              onMouseLeave={handleMouseLeave}
+            >
+              <Camera className="camera-icon" />
+            </td>
+            <td>{card.name}</td>
+            {showQuantity && (
+              <td>
+                <button
+                  className="quantity-button"
+                  onClick={() => handleDecrease(card.scryfallId)}
+                >
+                  -
+                </button>
+                <span className="quantity">{card.quantity}</span>
+                <button
+                  className="quantity-button"
+                  onClick={() => handleIncrease(card.scryfallId)}
+                >
+                  +
+                </button>
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
   return (
     <div className="deck-container">
       <h2 className="deck-title">
         {deck.name} ({deck.cards.length} cartes)
       </h2>
+
+      <div className="import-section">
+        <h3>Importer des cartes depuis un fichier texte</h3>
+        <input type="file" onChange={handleFileChange} />
+        <button onClick={handleFileUpload}>Importer</button>
+      </div>
+
       <div className="deck-detail-container">
         <div className="deck-list-panel">
-          <div className="deck-detailed">
-            <ul>
-              {groupCardsByScryfallId(deck.cards).map((card, index) => (
-                <li key={`${card.scryfallId}_${index}`}>
-                  <img src={card.imageUrl} alt={card.name} />
-                  <p>{card.name}</p>
-                  <div>
-                    <button
-                      className="quantity-button"
-                      onClick={() => decreaseCardInDeck(card.scryfallId)}
-                    >
-                      -
-                    </button>
-                    <span className="quantity-button"> {card.quantity} </span>
-                    <button
-                      className="quantity-button"
-                      onClick={() => addCardToSelected(card)}
-                    >
-                      +
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <h3>Deck</h3>
+          {renderCardTable(
+            groupCardsByScryfallId(deck.cards),
+            decreaseCardInDeck,
+            addCardToSelected
+          )}
+          {hoveredCard.imageUrl && (
+            <div
+              className="hovered-image"
+              style={{
+                top: `${hoveredCard.top}px`,
+                left: `${hoveredCard.left}px`,
+              }}
+            >
+              <img src={hoveredCard.imageUrl} alt="Carte prévisualisée" />
+            </div>
+          )}
         </div>
+
         <div className="search-panel">
-          <div className="import-section">
-            <h3>Importer des cartes depuis un fichier</h3>
-            <input type="file" onChange={handleFileChange} />
-            <button onClick={handleFileUpload}>Importer</button>
-          </div>
           <div className="search-section">
-            <h3>Ajouter une carte</h3>
+            <h3>Rechercher une carte</h3>
             <form onSubmit={handleSearch}>
               <input
                 type="text"
@@ -297,6 +356,8 @@ const DeckDetail = () => {
                   className="search-card"
                   key={card.id}
                   onClick={() => addCardToDeck(card)}
+                  onMouseEnter={(e) => handleMouseEnter(card, e)}
+                  onMouseLeave={handleMouseLeave}
                 >
                   {card.card_faces && card.card_faces[0].image_uris ? (
                     <img
@@ -314,38 +375,20 @@ const DeckDetail = () => {
             </div>
           </div>
         </div>
+
         <div className="selected-cards-panel">
+          <h3>Cartes à ajouter</h3>
           <div className="selected-cards-section">
-            <h3>Cartes Sélectionnées</h3>
-            <ul>
-              {deckCards.map((card, index) => (
-                <li key={`${card.scryfallId}_${card.name}_${index}`}>
-                  <img src={card.imageUrl} alt={card.name} />
-                  <p>{card.name}</p>
-                  <div>
-                    <button
-                      className="quantity-button"
-                      onClick={() => decreaseQuantity(card.scryfallId)}
-                    >
-                      -
-                    </button>
-                    <span className="quantity-button"> {card.quantity} </span>
-                    <button
-                      className="quantity-button"
-                      onClick={() => increaseQuantity(card.scryfallId)}
-                    >
-                      +
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {renderCardTable(deckCards, decreaseQuantity, increaseQuantity)}
           </div>
-          <button onClick={saveDeck}>Enregistrer le deck</button>
+          <button className="selected-cards-button" onClick={saveDeck}>
+            Enregistrer le deck
+          </button>
         </div>
       </div>
     </div>
   );
 };
+
 
 export default DeckDetail;

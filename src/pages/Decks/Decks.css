@@ -17,10 +17,77 @@
   width: 100%;
 }
 
-.deck-list-panel,
-.selected-cards-panel,
 .search-panel {
   flex: 1;
+}
+
+.deck-detail-container h3 {
+  font-size: 1.5rem;
+}
+
+.deck-detail-container table {
+  background-color: rgba(0, 0, 0, 0.343);
+}
+
+.deck-list-panel,
+.selected-cards-panel {
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  align-items: center;
+}
+
+.deck-detailed-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #f5f5f5;
+}
+
+.deck-detailed-table th,
+.deck-detailed-table td {
+  border: 1px solid #444;
+  padding: 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.deck-detailed-table th {
+  background-color: #222;
+}
+
+.camera-icon {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.hovered-image {
+  position: absolute;
+  z-index: 10;
+}
+
+.hovered-image img {
+  max-width: 230px;
+  border: 1px solid goldenrod;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(218, 165, 32, 0.5);
+}
+
+.quantity-button {
+  background: none;
+  color: #f5f5f5;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 5px 5px;
+  transition: color 0.3s;
+}
+
+.quantity-button:hover {
+  color: goldenrod;
+}
+
+.quantity {
+  display: inline-block;
+  min-width: 20px;
 }
 
 .search-section {
@@ -30,6 +97,10 @@
   align-items: center;
   border-left: 3px solid rgba(0, 0, 0, 0.4);
   border-right: 3px solid rgba(0, 0, 0, 0.4);
+}
+
+.search-section form {
+  margin-bottom: 10px;
 }
 
 .selected-cards-section,
@@ -61,12 +132,6 @@
   text-align: center;
 }
 
-.decks-container input[type="text"],
-.decks-container button {
-  padding: 10px;
-  margin-top: 10px;
-}
-
 .selected-cards-section ul {
   display: grid;
   grid-template-columns: repeat(3, minmax(100px, 1fr));
@@ -94,13 +159,106 @@
   align-items: center;
 }
 
-.deck-detailed .quantity-button,
-.selected-cards-section .quantity-button {
-  margin: 0;
+.decks-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  padding: 20px;
+  color: #f5f5f5;
+}
+
+.decks-container h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.deck-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  width: 100%;
+}
+
+.deck-link {
+  text-decoration: none;
+  color: inherit;
+  width: 200px;
+}
+
+.deck-item {
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+
+.deck-item h3 {
+  color: goldenrod;
+  font-size: 1.2rem;
+}
+
+.deck-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 16px rgba(218, 165, 32, 0.5);
+  background-color: rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+}
+
+.deck-card-count {
+  font-size: 1.2rem;
+  color: #ccc;
+}
+
+.create-deck {
+  margin-top: 20px;
+}
+
+.create-deck form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.import-section {
+  margin-bottom: 2rem;
+}
+
+.create-deck button,
+.import-section button,
+.search-section button,
+.selected-cards-button {
   padding: 0.5rem;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: border 0.3s ease, color 0.3s ease, background-color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.create-deck button:hover,
+.import-section button:hover,
+.search-section button:hover,
+.selected-cards-button:hover {
+  border: 1px solid goldenrod;
+  color: goldenrod;
+  box-shadow: 0 0 5px rgba(218, 165, 32, 0.5);
+  text-shadow: 0 0 5px rgba(218, 165, 32, 0.5);
 }
 
 @media (max-width: 768px) {
+  .deck-list {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .deck-link {
+    width: 100%;
+    max-width: 300px;
+  }
+
   .deck-detail-container {
     flex-direction: column;
   }

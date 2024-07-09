@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setUser } from "../../store/slices/userSlice";
+
 import MagicLoader from "../../components/MagicLoader/MagicLoader";
 import "./Form.css";
 
@@ -59,25 +60,41 @@ const Signin = () => {
   };
 
   return (
-    <div className="form-container">
-      <div className="form-card">
-        <form onSubmit={handleSigninSubmit}>
-          <div className="form-row">
-            <input type="text" placeholder="Pseudo" name="username" />
-            <input type="password" placeholder="Mot de passe" name="password" />
-          </div>
-          <div className="form-row">
-            <button
-              type="submit"
-              className={`submit-button ${isLoading ? "loading" : ""}`}
-              disabled={isLoading}
-            >
-              {isLoading ? <MagicLoader /> : "Se connecter"}
-            </button>
-          </div>
-        </form>
+    <>
+      {isLoading && (
+        <div className="alert-container">
+          <p className="alert-message">
+            Le Backend est hébergé sur un serveur gratuit.
+          </p>
+          <p className="alert-message">
+            L'opération peut prendre quelques minutes
+          </p>
+        </div>
+      )}
+      <div className="form-container">
+        <div className="form-card">
+          <form onSubmit={handleSigninSubmit}>
+            <div className="form-row">
+              <input type="text" placeholder="Pseudo" name="username" />
+              <input
+                type="password"
+                placeholder="Mot de passe"
+                name="password"
+              />
+            </div>
+            <div className="form-row">
+              <button
+                type="submit"
+                className={`submit-button ${isLoading ? "loading" : ""}`}
+                disabled={isLoading}
+              >
+                {isLoading ? <MagicLoader /> : "Se connecter"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

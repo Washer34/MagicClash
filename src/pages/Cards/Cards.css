@@ -31,8 +31,9 @@
 .search-card-container button {
   padding: 0.5rem;
   border-radius: 5px;
-  border: 1px solid transparent;
-  transition: border 0.3s ease, color 0.3s ease, background-color 0.3s ease, text-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: border 0.3s ease, color 0.3s ease, background-color 0.3s ease,
+    text-shadow 0.3s ease;
 }
 
 .search-card-container button:hover {
@@ -60,7 +61,7 @@
   }
 }
 
-@media (max-width: 599px){
+@media (max-width: 599px) {
   .search-card-container .cards-grid {
     grid-template-columns: repeat(2, 1fr);
   }

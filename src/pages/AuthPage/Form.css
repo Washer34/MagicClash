@@ -51,3 +51,11 @@
   color: goldenrod;
   text-shadow: 0 0 5px rgba(218, 165, 32, 0.5);
 }
+
+.alert-container {
+  position: absolute;
+  border: 1px solid transparent;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+  padding: 1rem;
+  border-radius: 5px;
+}
